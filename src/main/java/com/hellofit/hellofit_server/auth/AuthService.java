@@ -1,10 +1,10 @@
 package com.hellofit.hellofit_server.auth;
 
 import com.hellofit.hellofit_server.auth.dto.*;
-import com.hellofit.hellofit_server.auth.token.RefreshToken;
+import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
 import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
-import com.hellofit.hellofit_server.user.User;
+import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,32 +28,32 @@ public class AuthService {
 
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
-        User user = User.builder()
+        UserEntity userEntity = UserEntity.builder()
                 .email(request.getEmail())
                 .password(encryptedPassword)
                 .nickname(request.getNickname())
                 .isPrivacyAgree(request.getIsPrivacyAgree())
                 .build();
 
-        return userRepository.save(user).getId();
+        return userRepository.save(userEntity).getId();
     }
 
     // 로그인
     public LoginResponseDto login(LoginRequestDto request) {
-        User user = userRepository.findByEmail(request.getEmail())
+        UserEntity userEntity = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), user.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getEmail());
+        String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getId(), userEntity.getEmail());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userEntity.getId(), userEntity.getEmail());
 
         // Refresh Token 저장 (accessToken이 아니라 refreshToken 저장해야 함)
         refreshTokenRepository.save(
-                RefreshToken.builder()
-                        .userId(user.getId())
+                RefreshTokenEntity.builder()
+                        .userId(userEntity.getId())
                         .token(refreshToken)
                         .build()
         );
@@ -77,7 +77,7 @@ public class AuthService {
         UUID userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
 
         // 3. 저장된 Refresh Token과 비교
-        RefreshToken savedToken = refreshTokenRepository.findById(userId)
+        RefreshTokenEntity savedToken = refreshTokenRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("저장된 Refresh Token이 없습니다."));
 
         if (!savedToken.getToken().equals(refreshToken)) {

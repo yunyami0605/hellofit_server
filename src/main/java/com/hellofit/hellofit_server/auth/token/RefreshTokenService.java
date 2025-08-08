@@ -16,7 +16,7 @@ public class RefreshTokenService {
                 .ifPresentOrElse(
                         token -> token.updateToken(refreshToken),
                         () -> refreshTokenRepository.save(
-                                RefreshToken.builder()
+                                RefreshTokenEntity.builder()
                                         .userId(userId)
                                         .token(refreshToken)
                                         .build()
@@ -25,7 +25,7 @@ public class RefreshTokenService {
     }
 
     // 토큰 조회
-    public Optional<RefreshToken> findByUserId(UUID userId){
+    public Optional<RefreshTokenEntity> findByUserId(UUID userId){
         return refreshTokenRepository.findById(userId);
     }
 

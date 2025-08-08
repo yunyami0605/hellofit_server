@@ -27,17 +27,17 @@ public class UserService {
         // 2. 비밀번호 암호화
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
-        User user = User.builder()
+        UserEntity userEntity = UserEntity.builder()
                 .email(request.getEmail())
                 .password(encryptedPassword)
                 .nickname(request.getNickname())
                 .isPrivacyAgree(request.getIsPrivacyAgree())
                 .build();
 
-        return userRepository.save(user).getId();
+        return userRepository.save(userEntity).getId();
     }
 
-    public User getUserById(UUID id){
+    public UserEntity getUserById(UUID id){
         return userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Not Found User"));
     }
 
@@ -47,24 +47,24 @@ public class UserService {
     }
 
     public UUID updateUser(UUID id, UpdateUserRequestDto request){
-        User user = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Not Found User"));
+        UserEntity userEntity = userRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Not Found User"));
 
         if (request.getNickname() != null) {
-            user.setNickname(request.getNickname());
+            userEntity.setNickname(request.getNickname());
         }
 
         if (request.getPassword() != null) {
-            user.setPassword(request.getPassword()); // 실무는 반드시 암호화
+            userEntity.setPassword(request.getPassword()); // 실무는 반드시 암호화
         }
 
-        return userRepository.save(user).getId();
+        return userRepository.save(userEntity).getId();
     }
 
 
     public UUID deleteUser(UUID id) {
-        User user = getUserById(id);
-        userRepository.delete(user);
+        UserEntity userEntity = getUserById(id);
+        userRepository.delete(userEntity);
 
-        return user.getId();
+        return userEntity.getId();
     }
 }

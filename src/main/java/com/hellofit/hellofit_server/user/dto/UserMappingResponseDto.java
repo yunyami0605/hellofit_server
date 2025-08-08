@@ -1,6 +1,6 @@
 package com.hellofit.hellofit_server.user.dto;
 
-import com.hellofit.hellofit_server.user.User;
+import com.hellofit.hellofit_server.user.UserEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,10 +16,10 @@ public class UserMappingResponseDto {
         private UUID id;
         private String nickname;
 
-        public static Summary fromEntity(User user) {
+        public static Summary fromEntity(UserEntity userEntity) {
             return Summary.builder()
-                    .id(user.getId())
-                    .nickname(user.getNickname())
+                    .id(userEntity.getId())
+                    .nickname(userEntity.getNickname())
                     .build();
         }
     }
@@ -33,10 +33,10 @@ public class UserMappingResponseDto {
         private String nickname;
         private String email;
 
-        public static Detail fromEntity(User user) {
+        public static Detail fromEntity(UserEntity userEntity) {
             return Detail.builder()
-                    .id(user.getId())
-                    .nickname(user.getNickname())
+                    .id(userEntity.getId())
+                    .nickname(userEntity.getNickname())
                     .build();
         }
 

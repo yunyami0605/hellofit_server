@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class RefreshToken {
+public class RefreshTokenEntity {
 
     @Id
     private UUID userId;
