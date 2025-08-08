@@ -90,4 +90,14 @@ public class JwtTokenProvider {
             return false;
         }
     }
+
+    public String getEmailFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject(); // email을 subject로 저장했기 때문에 여기서 꺼냄
+    }
+
 }
