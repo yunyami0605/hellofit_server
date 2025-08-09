@@ -29,6 +29,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    // access token 갱신 api
     @PostMapping("/refresh")
     public ResponseEntity<TokenRefreshResponseDto> refreshToken(@RequestBody @Valid TokenRefreshRequestDto request) {
         return ResponseEntity.ok(authService.refreshAccessToken(request));

@@ -22,12 +22,15 @@ public class AuthService {
 
     // 회원가입
     public UUID signup(SignupRequestDto request) {
+        // 1. 이메일 중복 여부 체크
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
 
+        // 2. 비밀번호 암호화
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
+        // 3. 유저 정보 생성
         UserEntity userEntity = UserEntity.builder()
                 .email(request.getEmail())
                 .password(encryptedPassword)
@@ -35,22 +38,26 @@ public class AuthService {
                 .isPrivacyAgree(request.getIsPrivacyAgree())
                 .build();
 
+        // 4. 유저 정보 저장
         return userRepository.save(userEntity).getId();
     }
 
     // 로그인
     public LoginResponseDto login(LoginRequestDto request) {
+        // 1. 이메일로 유저 조회 -> 없으면 에러 반환
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
+        // 2. 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
+        // 3. ac, rf token 생성
         String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getId(), userEntity.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(userEntity.getId(), userEntity.getEmail());
 
-        // Refresh Token 저장 (accessToken이 아니라 refreshToken 저장해야 함)
+        // 4. rf Token 저장
         refreshTokenRepository.save(
                 RefreshTokenEntity.builder()
                         .userId(userEntity.getId())
@@ -58,6 +65,7 @@ public class AuthService {
                         .build()
         );
 
+        // 5. ac, rf 토큰 반환 반환
         return LoginResponseDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -92,6 +100,7 @@ public class AuthService {
                 .build();
     }
 
+    // 로그아웃 -> rf token 제거
     public void logout(UUID userId){
         refreshTokenRepository.deleteById(userId);
     }

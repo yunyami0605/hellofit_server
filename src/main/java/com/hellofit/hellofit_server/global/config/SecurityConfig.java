@@ -1,7 +1,9 @@
 package com.hellofit.hellofit_server.global.config;
 
 import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
+import com.hellofit.hellofit_server.global.security.PepperingPasswordEncoder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -23,15 +25,16 @@ public class SecurityConfig {
     // 필드 추가
     private final JwtTokenProvider jwtTokenProvider;
 
-//    public SecurityConfig(JwtTokenProvider jwtTokenProvider) {
-//        this.jwtTokenProvider = jwtTokenProvider;
-//    }
-
+    // 비밀번호 인코딩 메서드 제공하는 빈객체 등록
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder(
+            @Value("${hellofit.security.pepper}") String pepper
+    ) {
+        int strength = 12; // 서버 성능보고 조절
+        return new PepperingPasswordEncoder(new BCryptPasswordEncoder(strength), pepper);
     }
 
+    // swagger 보안 필터
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -55,13 +58,12 @@ public class SecurityConfig {
 
     // 테스트용 사용자 등록 (인메모리)
     @Bean
-    public UserDetailsService userDetailsService() {
+    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
                 .username("admin")
-                .password(passwordEncoder().encode("admin1234")) // ✅ 이렇게 메서드 직접 호출
+                .password(passwordEncoder.encode("admin1234"))
                 .roles("USER")
                 .build();
-
         return new InMemoryUserDetailsManager(user);
     }
 }
