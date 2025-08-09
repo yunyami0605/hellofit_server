@@ -37,16 +37,19 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-	// 🔁 자동 리로딩 DevTools
+	// 자동 리로딩 DevTools
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 
-	// ⚙️ application.yml 자동완성용 Configuration Processor
+	// ⚙application.yml 자동완성용 Configuration Processor
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-	// 📘 Swagger - Springdoc OpenAPI
+	// Swagger - Springdoc OpenAPI
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
 
 	implementation("org.springframework.boot:spring-boot-starter-security")
+
+	// env 설정 추가
+	implementation("me.paulschwarz:spring-dotenv:3.0.0")
 }
 
 tasks.withType<Test> {
