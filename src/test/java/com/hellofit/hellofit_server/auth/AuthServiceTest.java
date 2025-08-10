@@ -91,8 +91,8 @@ public class AuthServiceTest {
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(userEntity));
         when(this.passwordEncoder.matches(request.getPassword(), userEntity.getPassword())).thenReturn(true);
-        when(jwtTokenProvider.generateAccessToken(userId, request.getEmail())).thenReturn("AC");
-        when(jwtTokenProvider.generateRefreshToken(userId, request.getEmail())).thenReturn("RC");
+        when(jwtTokenProvider.generateAccessToken(userId, null)).thenReturn("AC");
+        when(jwtTokenProvider.generateRefreshToken(userId, null)).thenReturn("RC");
         when(this.refreshTokenRepository.save(any(RefreshTokenEntity.class))).thenReturn(null);
 
         // when
@@ -164,8 +164,7 @@ public class AuthServiceTest {
         when(jwtTokenProvider.getUserIdFromToken(rf)).thenReturn(uid);
         when(refreshTokenRepository.findById(uid))
                 .thenReturn(Optional.of(RefreshTokenEntity.builder().userId(uid).token(rf).build()));
-        when(jwtTokenProvider.getEmailFromToken(rf)).thenReturn("test@test.com");
-        when(jwtTokenProvider.generateAccessToken(uid, "test@test.com")).thenReturn("newac");
+        when(jwtTokenProvider.generateAccessToken(uid, null)).thenReturn("newac");
 
         // when
         TokenRefreshResponseDto res = authService.refreshAccessToken(req);
@@ -175,8 +174,7 @@ public class AuthServiceTest {
         verify(jwtTokenProvider).validateToken(rf);
         verify(jwtTokenProvider).getUserIdFromToken(rf);
         verify(refreshTokenRepository).findById(uid);
-        verify(jwtTokenProvider).getEmailFromToken(rf);
-        verify(jwtTokenProvider).generateAccessToken(uid, "test@test.com");
+        verify(jwtTokenProvider).generateAccessToken(uid, null);
         verifyNoMoreInteractions(jwtTokenProvider, refreshTokenRepository);
     }
 

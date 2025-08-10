@@ -48,14 +48,17 @@ public class AuthService {
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
+        System.out.println(userEntity.getPassword());
+        System.out.println(request.getPassword());
+
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
         // 3. ac, rf token 생성
-        String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getId(), userEntity.getEmail());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userEntity.getId(), userEntity.getEmail());
+        String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getId(), null);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userEntity.getId(), null);
 
         // 4. rf Token 저장
         refreshTokenRepository.save(
@@ -93,7 +96,7 @@ public class AuthService {
         }
 
         // 4. 새 Access Token 발급
-        String newAccessToken = jwtTokenProvider.generateAccessToken(userId, jwtTokenProvider.getEmailFromToken(refreshToken));
+        String newAccessToken = jwtTokenProvider.generateAccessToken(userId, null);
 
         return TokenRefreshResponseDto.builder()
                 .accessToken(newAccessToken)
