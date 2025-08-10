@@ -2,22 +2,18 @@ package com.hellofit.hellofit_server.user;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.util.UUID;
 
 @Entity
-@Setter
-@Getter
-@AllArgsConstructor
+@Setter @Getter
+@AllArgsConstructor @NoArgsConstructor @Builder
 @Table(name = "users")
-@NoArgsConstructor
-@Builder
 public class UserEntity {
-
     @Id
-    @GeneratedValue
-    @Column(columnDefinition = "CHAR(36)")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @NotBlank
@@ -32,7 +28,7 @@ public class UserEntity {
     @Column(nullable = false, length = 12)
     private String nickname;
 
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
     private Boolean isPrivacyAgree;
 }
