@@ -23,7 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-@Tag(name = "Auth API", description = "인증/인가 관련 API")
+@Tag(name = "유저 API", description = "유저 CRUD API")
 @SecurityRequirement(name = "bearerAuth") // 기본은 인증 필요
 public class UserController {
     private final UserService userService;
