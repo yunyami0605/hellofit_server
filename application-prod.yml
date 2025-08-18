@@ -1,0 +1,22 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+# 운영 DB/비밀값은 환경변수로 주입하는 걸 권장
+spring:
+  datasource:
+    url: jdbc:mariadb://<prod-host>:3306/hellofit_db
+    username: hellofit_user
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate   # 운영은 update 대신 validate(+ Flyway 권장)
+
+jwt:
+  secret: ${JWT_SECRET}    # 운영은 반드시 환경변수로
+
+cors:
+  allowed-origins:
+    - https://www.hellofit.com
+    - https://app.hellofit.com

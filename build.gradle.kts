@@ -44,7 +44,7 @@ dependencies {
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
 	// Swagger - Springdoc OpenAPI
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
 	implementation("org.springframework.boot:spring-boot-starter-security")
 
