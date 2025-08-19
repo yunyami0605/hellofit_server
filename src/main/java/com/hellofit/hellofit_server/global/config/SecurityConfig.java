@@ -1,4 +1,3 @@
-// SecurityConfig.java
 package com.hellofit.hellofit_server.global.config;
 
 import com.hellofit.hellofit_server.global.jwt.JwtAuthenticationFilter;
@@ -10,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,10 +18,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import io.swagger.v3.oas.models.Components;
-import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-
 
 @Configuration
 @RequiredArgsConstructor
@@ -67,7 +63,7 @@ public class SecurityConfig {
                                                    JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
+                .cors(cors -> {}) // withDefaults() 동일
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT는 무상태
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedEntryPoint))       // 전역 401 처리
                 .authorizeHttpRequests(auth -> auth
