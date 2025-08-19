@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/users/profile")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "유저 프로필 API", description = "유저 프로필 관련 API")
@@ -36,7 +36,7 @@ public class UserProfileController {
             responseCode = "409",
             description = "User already exists"
     )
-    @PostMapping("/users/{userId}/profile")
+    @PostMapping("/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     public MutationResponse createProfile(
             @PathVariable UUID userId,
@@ -53,7 +53,7 @@ public class UserProfileController {
             description = "조회 성공",
             content = @Content(schema = @Schema(implementation = UserProfileResponse.class))
     )
-    @GetMapping("/users/{userId}/profile")
+    @GetMapping("/{userId}")
     public UserProfileResponse getProfile(@PathVariable UUID userId) {
         return this.userProfileService.getProfileById(userId);
     }
@@ -66,7 +66,7 @@ public class UserProfileController {
             description = "수정 성공",
             content = @Content(schema = @Schema(implementation = MutationResponse.class))
     )
-    @PatchMapping("/users/{userId}/profile")
+    @PatchMapping("/{userId}")
     public MutationResponse patchProfile(@PathVariable UUID userId, @RequestBody @Valid UpdateUserProfileRequestDto request){
         return new MutationResponse(this.userProfileService.patchProfile(userId, request));
     }

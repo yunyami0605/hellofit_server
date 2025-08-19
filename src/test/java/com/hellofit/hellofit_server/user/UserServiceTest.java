@@ -2,7 +2,9 @@ package com.hellofit.hellofit_server.user;
 
 import com.hellofit.hellofit_server.user.dto.CreateUserRequestDto;
 import com.hellofit.hellofit_server.user.dto.UpdateUserRequestDto;
-import org.hibernate.sql.Update;
+import com.hellofit.hellofit_server.user.exception.UserDuplicateEmailException;
+import com.hellofit.hellofit_server.user.exception.UserDuplicateNicknameException;
+import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,7 +17,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -76,10 +77,10 @@ public class UserServiceTest {
         // when & then
         // assertThatThrownBy(() -> { userService.createUser(request); }).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("이미 존재하는 이메일");
 
-        IllegalArgumentException ex =
-                assertThrows(IllegalArgumentException.class, () -> userService.createUser(request));
+        UserDuplicateEmailException ex =
+                assertThrows(UserDuplicateEmailException.class, () -> userService.createUser(request));
 
-        assertThat(ex).hasMessageContaining("이미 존재하는 이메일");
+        assertThat(ex).hasMessageContaining("이미 가입된 이메일입니다.");
 
         verify(userRepository, times(1)).findByEmail("test@test.com");
         verifyNoMoreInteractions(userRepository);
@@ -113,14 +114,37 @@ public class UserServiceTest {
         */
         // given
         UUID id = UUID.randomUUID();
+
         when(userRepository.findById(id)).thenReturn(Optional.empty());
         UpdateUserRequestDto request = new UpdateUserRequestDto("testNick");
 
         // when
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> userService.updateUser(id, request));
+        UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> userService.updateUser(id, request));
 
         // then
-        assertThat(ex).hasMessageContaining("Not Found User");
+        assertThat(ex).hasMessageContaining("요청한 사용자를 찾을 수 없습니다.");
+        verify(userRepository, times(1)).findById(id);
+    }
+
+    @Test
+    void updateUserWhenUserDuplicateNicknameThenFail(){
+        /*
+         * updateUser -> 중복 닉네임 수정 요청 -> "이미 사용중인 닉네임입니다." 에러 문구 반환 확인
+         */
+        // given
+        UUID id = UUID.randomUUID();
+        UserEntity savedUser = UserEntity.builder().id(id).nickname("testNick").build();
+
+        when(userRepository.findById(id)).thenReturn(Optional.of(savedUser));
+        UpdateUserRequestDto request = new UpdateUserRequestDto("testNick");
+        when(userRepository.findByNickname(request.getNickname())).thenReturn(Optional.of(savedUser));
+
+
+        // when
+        UserDuplicateNicknameException ex = assertThrows(UserDuplicateNicknameException.class, () -> userService.updateUser(id, request));
+
+        // then
+        assertThat(ex).hasMessageContaining("이미 사용중인 닉네임입니다.");
         verify(userRepository, times(1)).findById(id);
     }
 
