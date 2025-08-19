@@ -1,13 +1,13 @@
 package com.hellofit.hellofit_server.auth;
 
 import com.hellofit.hellofit_server.auth.dto.*;
-import com.hellofit.hellofit_server.global.dto.ErrorResponse;
+import com.hellofit.hellofit_server.global.constants.ErrorMessage;
+import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,7 +23,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 @Tag(name = "Auth API", description = "인증/인가 관련 API")
-@SecurityRequirement(name = "bearerAuth") // 기본은 인증 필요
 public class AuthController {
     private final AuthService authService;
 
@@ -35,10 +34,7 @@ public class AuthController {
             description = "가입 성공",
             content = @Content(schema = @Schema(implementation = MutationResponse.class))
     )
-    @ApiResponse(
-            responseCode = "409",
-            description = "이미 존재하는 이메일"
-    )
+    @ApiResponse(responseCode = "409", description = ErrorMessage.DUPLICATE_EMAIL, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @SecurityRequirements(value = {})
     @PostMapping("/signup")
     public ResponseEntity<MutationResponse> signup(@RequestBody @Valid SignupRequestDto request) {
@@ -56,7 +52,7 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
     )
     @ApiResponse(
-            responseCode = "404",
+            responseCode = "401",
             description = "가입되지 않은 이메일입니다."
     )
     @ApiResponse(

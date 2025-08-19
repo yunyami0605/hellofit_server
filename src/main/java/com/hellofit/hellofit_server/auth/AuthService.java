@@ -1,11 +1,15 @@
 package com.hellofit.hellofit_server.auth;
 
 import com.hellofit.hellofit_server.auth.dto.*;
+import com.hellofit.hellofit_server.auth.exception.NotMatchPasswordException;
+import com.hellofit.hellofit_server.auth.exception.TokenInvalidException;
+import com.hellofit.hellofit_server.auth.exception.UnAuthorizedEmailException;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
 import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
+import com.hellofit.hellofit_server.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -23,14 +28,15 @@ public class AuthService {
     // 회원가입
     public UUID signup(SignupRequestDto request) {
         // 1. 이메일 중복 여부 체크
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
-        }
+        userService.checkDuplicateEmail(request.getEmail());
 
-        // 2. 비밀번호 암호화
+        // 2. : 닉네임 중복 체크
+        userService.checkDuplicateNickname(request.getNickname());
+
+        // 3. 비밀번호 암호화
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
-        // 3. 유저 정보 생성
+        // 4. 유저 정보 생성
         UserEntity userEntity = UserEntity.builder()
                 .email(request.getEmail())
                 .password(encryptedPassword)
@@ -38,7 +44,7 @@ public class AuthService {
                 .isPrivacyAgree(request.getIsPrivacyAgree())
                 .build();
 
-        // 4. 유저 정보 저장
+        // 5. 유저 정보 저장
         return userRepository.save(userEntity).getId();
     }
 
@@ -46,14 +52,11 @@ public class AuthService {
     public LoginResponseDto login(LoginRequestDto request) {
         // 1. 이메일로 유저 조회 -> 없으면 에러 반환
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
-
-        System.out.println(userEntity.getPassword());
-        System.out.println(request.getPassword());
+                .orElseThrow(() -> new UnAuthorizedEmailException());
 
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new NotMatchPasswordException();
         }
 
         // 3. ac, rf token 생성
@@ -92,7 +95,7 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("저장된 Refresh Token이 없습니다."));
 
         if (!savedToken.getToken().equals(refreshToken)) {
-            throw new IllegalArgumentException("Refresh Token이 일치하지 않습니다.");
+            throw new TokenInvalidException(refreshToken);
         }
 
         // 4. 새 Access Token 발급
