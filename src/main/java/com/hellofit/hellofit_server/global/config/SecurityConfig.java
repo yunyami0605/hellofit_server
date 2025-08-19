@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,13 +23,15 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
+@EnableWebSecurity
+@EnableMethodSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    // 401을 즉시 반환할 엔트리포인트
+    // 인증되지 않는 사용자 (토큰 unvalid, empty) -> 해당 에러 반환
     @Bean
     public AuthenticationEntryPoint unauthorizedEntryPoint() {
         return new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
@@ -82,15 +86,5 @@ public class SecurityConfig {
                 .build();
     }
 
-    // ⛔️ InMemoryUserDetailsService는 httpBasic/formLogin을 쓸 때만 필요.
-    // JWT만 쓸 거면 제거하거나 테스트 용도로만 유지하세요.
-//    @Bean
-//    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-//        UserDetails user = User.builder()
-//                .username("admin")
-//                .password(passwordEncoder.encode("admin1234"))
-//                .roles("USER")
-//                .build();
-//        return new InMemoryUserDetailsManager(user);
-//    }
+
 }

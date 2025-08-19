@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -50,8 +49,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     String role = jwtTokenProvider.getRoleFromToken(token);
 
                     // 3. 권한 객체 생성 및 request에 ip, sessionId 추가
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
 
+                    // 인증 정보 구현체 (토큰 정보, role, 인증여부)
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userId,                  // principal = UUID
@@ -62,6 +62,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
+                }else{
+                    SecurityContextHolder.clearContext();
+                    authenticationEntryPoint.commence(
+                            request, response,
+                            new InsufficientAuthenticationException("Invalid token")
+                    );
+                    return;
                 }
             } catch (Exception ex) {
                 SecurityContextHolder.clearContext();
@@ -96,7 +103,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return pathMatcher.match("/auth/**", path)
+        return pathMatcher.match("/auth/login", path)
+                || pathMatcher.match("/auth/signup", path)
+                || pathMatcher.match("/auth/refresh", path)
                 || pathMatcher.match("/v3/api-docs/**", path)
                 || pathMatcher.match("/swagger-ui/**", path)
                 || pathMatcher.match("/swagger-resources/**", path)
