@@ -108,4 +108,16 @@ public class AuthController {
     public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UUID userId){
         return authService.getAuthInfo(userId);
     }
+
+    @Operation(summary = "XSRF Token 발급 API")
+    @ApiResponse(
+            responseCode = "200",
+            description = "토큰 발급 성공"
+    )
+    @SecurityRequirements(value = {})
+    @GetMapping("/xc")
+    public ResponseEntity<Boolean> getXSRFToken(HttpServletResponse response){
+        Boolean result = authService.getXSRFToken(response);
+        return ResponseEntity.ok(result);
+    }
 }

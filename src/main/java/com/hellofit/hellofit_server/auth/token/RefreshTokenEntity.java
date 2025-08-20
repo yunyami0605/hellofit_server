@@ -28,4 +28,9 @@ public class RefreshTokenEntity {
     public void updateToken(String newToken) {
         this.token = newToken;
     }
+
+//    @Column(nullable = false)
+//    private String deviceId; // 클라이언트에서 Localstorage UUID 넘거준걸 디바이스 저장
+
+
 }

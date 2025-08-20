@@ -106,6 +106,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         return pathMatcher.match("/auth/login", path)
                 || pathMatcher.match("/auth/signup", path)
+                || pathMatcher.match("/auth/xc", path)
                 || pathMatcher.match("/auth/refresh", path)
                 || pathMatcher.match("/v3/api-docs/**", path)
                 || pathMatcher.match("/swagger-ui/**", path)

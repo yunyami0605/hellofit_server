@@ -23,6 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -37,6 +38,19 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     /*
+    * XSRF Token 추가 및 헤더 설정
+    * */
+    public void setXSRFToken(HttpServletResponse response){
+        String xsrfToken = UUID.randomUUID().toString();
+
+        ResponseCookie xsrfCookie = ResponseCookie.from(AuthConstant.XSRF_TOKEN_COOKIE, xsrfToken)
+                .path("/")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, xsrfCookie.toString());
+    }
+
+    /*
      * ac, rf, xsrf token 생성 및 헤더 설정
      * */
     public LoginResponseDto setAuthToken(UserEntity user, HttpServletResponse response){
@@ -45,15 +59,22 @@ public class AuthService {
 
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), null);
 
-        String xsrfToken = UUID.randomUUID().toString();
 
-        // 2. rf Token 저장
-        refreshTokenRepository.save(
-                RefreshTokenEntity.builder()
-                        .user(user)
-                        .token(refreshToken)
-                        .build()
-        );
+        // 2. rf Token 조회 → 있으면 update, 없으면 save
+        refreshTokenRepository.findByUser_Id(user.getId())
+                .ifPresentOrElse(
+                        entity -> {
+
+                            entity.updateToken(refreshToken); // 엔티티에 update 메서드 추가
+//                            refreshTokenRepository.save(entity);
+                        },
+                        () -> refreshTokenRepository.save(
+                                RefreshTokenEntity.builder()
+                                        .user(user)
+                                        .token(refreshToken)
+                                        .build()
+                        )
+                );
 
         // 3. 쿠키에 설정해서 응답
         ResponseCookie refreshCookie = ResponseCookie.from(AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken)
@@ -65,11 +86,9 @@ public class AuthService {
                 .maxAge(AuthConstant.REFRESH_TOKEN_LIFETIME)
                 .build();
 
-        ResponseCookie xsrfCookie = ResponseCookie.from(AuthConstant.XSRF_TOKEN_COOKIE, xsrfToken)
-                .path("/")
-                .build();
+        // 3.1. xsrf 토큰 헤더 설정
+        setXSRFToken(response);
 
-        response.addHeader(HttpHeaders.SET_COOKIE, xsrfCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         // 4. ac, rf 토큰 반환 반환
@@ -96,13 +115,14 @@ public class AuthService {
                 .build();
 
         // 5. 유저 정보 저장
-        UUID userId = userRepository.save(userEntity).getId();
+        UserEntity savedUserEntity = userRepository.save(userEntity);
 
         // 6. token 설정
-        return setAuthToken(userEntity, response);
+        return setAuthToken(savedUserEntity, response);
     }
 
-    // 로그인
+    // 로그인 -> TODO: 디바이스 별로 로그인 분리 추가하기
+    @Transactional
     public LoginResponseDto login(LoginRequestDto request, HttpServletResponse response) {
         // 1. 이메일로 유저 조회 -> 없으면 에러 반환
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
@@ -113,6 +133,7 @@ public class AuthService {
             throw new NotMatchPasswordException();
         }
 
+        // TODO: 나중에 디바이스 별 로그인 로직 추가하면, 로직 수정하기
         return setAuthToken(userEntity, response);
     }
 
@@ -128,6 +149,12 @@ public class AuthService {
             }
         }
         return Optional.empty();
+    }
+
+    public Boolean getXSRFToken(HttpServletResponse response){
+        setXSRFToken(response);
+
+        return true;
     }
 
     /*
