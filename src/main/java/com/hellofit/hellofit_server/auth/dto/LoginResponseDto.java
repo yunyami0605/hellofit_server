@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,11 +18,12 @@ public class LoginResponseDto {
             description = "Access Token (JWT 형식)",
             example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     )
-    private String accessToken;
+    private String access;
 
     @Schema(
-            description = "Refresh Token (JWT 형식)",
-            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            description = "user id",
+            example = "1234432..."
     )
-    private String refreshToken;
+    private UUID id;
+
 }

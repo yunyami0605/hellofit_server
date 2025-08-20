@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.user;
 
+import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,4 +32,7 @@ public class UserEntity {
     @NotNull
     @Column(nullable = false)
     private Boolean isPrivacyAgree;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private RefreshTokenEntity refreshToken;
 }

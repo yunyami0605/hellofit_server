@@ -8,5 +8,5 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class TokenRefreshResponseDto {
-    private String accessToken;
+    private String accessCookie;
 }

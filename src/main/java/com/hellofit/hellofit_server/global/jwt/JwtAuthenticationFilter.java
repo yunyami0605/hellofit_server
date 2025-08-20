@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.global.jwt;
 
+import com.hellofit.hellofit_server.auth.constants.TokenStatus;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token)) {
             try {
-                if (jwtTokenProvider.validateToken(token) &&
+                if (jwtTokenProvider.validateToken(token).equals(TokenStatus.VALID) &&
                         SecurityContextHolder.getContext().getAuthentication() == null) {
 
                     // 2. token에서 user id, role 가져옴

@@ -4,20 +4,27 @@ import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
+import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -37,44 +44,68 @@ public class AuthController {
     @ApiResponse(responseCode = "409", description = ErrorMessage.DUPLICATE_EMAIL, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @SecurityRequirements(value = {})
     @PostMapping("/signup")
-    public ResponseEntity<MutationResponse> signup(@RequestBody @Valid SignupRequestDto request) {
+    public ResponseEntity<LoginResponseDto> signup(@RequestBody @Valid SignupRequestDto request, HttpServletResponse response) {
         return ResponseEntity.ok(
-                new MutationResponse(authService.signup(request))
+                authService.signup(request, response)
         );
     }
 
     @Operation(
             summary = "이메일 로그인 API"
     )
-    @ApiResponse(
-            responseCode = "200",
-            description = "로그인 성공",
-            content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
-    )
-    @ApiResponse(
-            responseCode = "401",
-            description = "가입되지 않은 이메일입니다."
-    )
-    @ApiResponse(
-            responseCode = "401",
-            description = "비밀번호가 일치하지 않습니다."
-    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "로그인 성공",
+                    content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "로그인 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiErrorResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = ErrorMessage.UNAUTHORIZED_EMAIL
+                                    ),
+                                    @ExampleObject(
+                                            name = ErrorMessage.NOT_MATCH_PASSWORD
+                                    )
+                            }
+                    )
+            )
+    })
     @SecurityRequirements(value = {})
     @PostMapping("/login")
-    public LoginResponseDto login(@RequestBody @Valid LoginRequestDto request) {
-        return authService.login(request);
+    public ResponseEntity<LoginResponseDto> login(@RequestBody @Valid LoginRequestDto request, HttpServletResponse response) {
+        return ResponseEntity.ok(authService.login(request, response));
     }
 
     @Operation(summary = "토큰 갱신 API")
     @PostMapping("/refresh")
-    public ResponseEntity<TokenRefreshResponseDto> refreshToken(@RequestBody @Valid TokenRefreshRequestDto request) {
+    public ResponseEntity<TokenRefreshResponseDto> refreshToken(HttpServletRequest request) {
         return ResponseEntity.ok(authService.refreshAccessToken(request));
     }
 
     @Operation(summary = "로그아웃 API")
+    @ApiResponse(
+            responseCode = "200",
+            description = "로그아웃 성공"
+    )
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UUID userId){
         authService.logout(userId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "본인 유저 정보 조회 API")
+    @ApiResponse(
+            responseCode = "200",
+            description = "유저 정보 성공",
+            content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))
+    )
+    @GetMapping("/info")
+    public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UUID userId){
+        return authService.getAuthInfo(userId);
     }
 }
