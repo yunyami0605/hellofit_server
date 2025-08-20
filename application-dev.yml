@@ -6,6 +6,7 @@ spring:
 cors:
   allowed-origins:
     - http://localhost:3000
+    - http://localhost:3001
 
 springdoc:
   api-docs:
