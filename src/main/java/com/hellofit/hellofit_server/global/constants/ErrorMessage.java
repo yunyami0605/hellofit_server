@@ -10,6 +10,10 @@ public class ErrorMessage {
     public static final String DUPLICATE_EMAIL = "이미 가입된 이메일입니다.";
     public static final String DUPLICATE_NICKNAME = "이미 사용중인 닉네임입니다.";
 
+    // ===== USER 관련 =====
+    public static final String USER_PROFILE_NOT_FOUND = "사용자 프로필이 없습니다.";
+    public static final String USER_PROFILE_DUPLICATE = "이미 사용자 프로필이 존재합니다.";
+
     // ===== Auth 관련 =====
     public static final String UNAUTHORIZED = "인증이 필요합니다.";
     public static final String FORBIDDEN = "권한이 없습니다.";

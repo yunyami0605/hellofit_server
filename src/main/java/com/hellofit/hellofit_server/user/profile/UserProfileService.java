@@ -5,6 +5,7 @@ import com.hellofit.hellofit_server.user.UserRepository;
 import com.hellofit.hellofit_server.user.profile.dto.CreateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UpdateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UserProfileResponse;
+import com.hellofit.hellofit_server.user.profile.exception.UserProfileException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,11 +26,14 @@ public class UserProfileService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
 
+    /*
+    * 사용자 프로필 생성 서비스 로직
+    * */
     public UUID createProfile(UUID userId, CreateUserProfileRequestDto request){
         UserEntity user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "User not found"));
 
         if(userProfileRepository.existsByUserId(userId)){
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
+            throw new UserProfileException.UserProfileDuplicate("createProfile", userId);
         }
 
         UserProfileEntity profile = UserProfileEntity.builder()
@@ -58,8 +62,12 @@ public class UserProfileService {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
+    /*
+    * 유저 프로필 조회 서비스 로직
+    * */
     public UserProfileResponse getProfileById(UUID userId){
-        UserProfileEntity userProfile = userProfileRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+        UserProfileEntity userProfile = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new UserProfileException.UserProfileNotFound("getProfileById", userId));
 
         return UserProfileResponse.builder()
                 .userId(userId)
@@ -73,9 +81,12 @@ public class UserProfileService {
                 .build();
     }
 
+    /*
+    * 유저 정보 수정 서비스 로직
+    * */
     public UUID patchProfile(UUID userId, UpdateUserProfileRequestDto request) {
         UserProfileEntity profile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
+                .orElseThrow(() -> new UserProfileException.UserProfileNotFound("patchProfile", userId));
 
         if (request.getAgeGroup() != null) profile.setAgeGroup(request.getAgeGroup());
         if (request.getGender() != null)   profile.setGender(request.getGender());

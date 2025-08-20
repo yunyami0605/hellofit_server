@@ -33,6 +33,13 @@ public enum ErrorCode {
     @Schema(description = ErrorMessage.DUPLICATE_NICKNAME)
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, ErrorMessage.DUPLICATE_NICKNAME),
 
+    // ===== USER PROFILE 관련 =====
+    @Schema(description = ErrorMessage.USER_PROFILE_DUPLICATE)
+    USER_PROFILE_DUPLICATE(HttpStatus.CONFLICT, ErrorMessage.USER_PROFILE_DUPLICATE),
+
+    @Schema(description = ErrorMessage.USER_PROFILE_NOT_FOUND)
+    USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.USER_PROFILE_NOT_FOUND),
+
     // ===== Auth 관련 =====
     @Schema(description = ErrorMessage.UNAUTHORIZED)
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED),
@@ -53,6 +60,7 @@ public enum ErrorCode {
 
     @Schema(description = ErrorMessage.TOKEN_INVALID)
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, ErrorMessage.TOKEN_INVALID);
+
 
     private final HttpStatus status;
     private final String message;
