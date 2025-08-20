@@ -29,11 +29,9 @@ public class UserProfileService {
     /*
     * 사용자 프로필 생성 서비스 로직
     * */
-    public UUID createProfile(UUID userId, CreateUserProfileRequestDto request){
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "User not found"));
-
-        if(userProfileRepository.existsByUserId(userId)){
-            throw new UserProfileException.UserProfileDuplicate("createProfile", userId);
+    public UUID createProfile(UserEntity user, CreateUserProfileRequestDto request){
+        if(userProfileRepository.existsByUserId(user.getId())){
+            throw new UserProfileException.UserProfileDuplicate("createProfile", user.getId());
         }
 
         UserProfileEntity profile = UserProfileEntity.builder()
@@ -84,9 +82,9 @@ public class UserProfileService {
     /*
     * 유저 정보 수정 서비스 로직
     * */
-    public UUID patchProfile(UUID userId, UpdateUserProfileRequestDto request) {
-        UserProfileEntity profile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserProfileException.UserProfileNotFound("patchProfile", userId));
+    public UUID patchProfile(UserEntity user, UpdateUserProfileRequestDto request) {
+        UserProfileEntity profile = userProfileRepository.findById(user.getId())
+                .orElseThrow(() -> new UserProfileException.UserProfileNotFound("patchProfile", user.getId()));
 
         if (request.getAgeGroup() != null) profile.setAgeGroup(request.getAgeGroup());
         if (request.getGender() != null)   profile.setGender(request.getGender());

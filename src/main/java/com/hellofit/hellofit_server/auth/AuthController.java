@@ -4,6 +4,7 @@ import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
+import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -93,8 +94,8 @@ public class AuthController {
             description = "로그아웃 성공"
     )
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UUID userId){
-        authService.logout(userId);
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserEntity user){
+        authService.logout(user.getId());
         return ResponseEntity.ok().build();
     }
 
@@ -105,8 +106,8 @@ public class AuthController {
             content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))
     )
     @GetMapping("/info")
-    public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UUID userId){
-        return authService.getAuthInfo(userId);
+    public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UserEntity user){
+        return authService.getAuthInfo(user.getId());
     }
 
     @Operation(summary = "XSRF Token 발급 API")

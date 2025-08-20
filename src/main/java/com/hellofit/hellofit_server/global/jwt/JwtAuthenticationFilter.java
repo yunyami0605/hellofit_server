@@ -1,6 +1,9 @@
 package com.hellofit.hellofit_server.global.jwt;
 
 import com.hellofit.hellofit_server.auth.constants.TokenStatus;
+import com.hellofit.hellofit_server.user.UserEntity;
+import com.hellofit.hellofit_server.user.UserRepository;
+import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final AuthenticationEntryPoint authenticationEntryPoint; // ✅ 추가
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
@@ -52,10 +56,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 3. 권한 객체 생성 및 request에 ip, sessionId 추가
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
 
+                    UserEntity user =  userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+
                     // 인증 정보 구현체 (토큰 정보, role, 인증여부)
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
-                                    userId,                  // principal = UUID
+                                    user,                  // principal = UUID
                                     null,                    // credentials
                                     List.of(authority)       // 단일 권한
                             );

@@ -3,6 +3,7 @@ package com.hellofit.hellofit_server.user.profile;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
+import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import com.hellofit.hellofit_server.user.profile.dto.CreateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UpdateUserProfileRequestDto;
@@ -41,10 +42,10 @@ public class UserProfileController {
     @PostMapping("")
     @ResponseStatus(HttpStatus.CREATED)
     public MutationResponse createProfile(
-            @AuthenticationPrincipal UUID userId,
+            @AuthenticationPrincipal UserEntity user,
             @RequestBody @Valid CreateUserProfileRequestDto request
             ){
-        return new MutationResponse(this.userProfileService.createProfile(userId, request));
+        return new MutationResponse(this.userProfileService.createProfile(user, request));
     }
 
     @Operation(
@@ -56,8 +57,8 @@ public class UserProfileController {
             @ApiResponse(responseCode = "404", description = ErrorMessage.USER_PROFILE_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping()
-    public UserProfileResponse getProfile(@AuthenticationPrincipal UUID userId) {
-        return this.userProfileService.getProfileById(userId);
+    public UserProfileResponse getProfile(@AuthenticationPrincipal UserEntity user) {
+        return this.userProfileService.getProfileById(user.getId());
     }
 
     @Operation(
@@ -73,7 +74,7 @@ public class UserProfileController {
             @ApiResponse(responseCode = "404", description = ErrorMessage.USER_PROFILE_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PatchMapping()
-    public MutationResponse patchProfile(@AuthenticationPrincipal UUID userId, @RequestBody @Valid UpdateUserProfileRequestDto request){
-        return new MutationResponse(this.userProfileService.patchProfile(userId, request));
+    public MutationResponse patchProfile(@AuthenticationPrincipal UserEntity user, @RequestBody @Valid UpdateUserProfileRequestDto request){
+        return new MutationResponse(this.userProfileService.patchProfile(user, request));
     }
 }

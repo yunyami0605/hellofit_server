@@ -3,6 +3,7 @@ package com.hellofit.hellofit_server.global.config;
 import com.hellofit.hellofit_server.global.jwt.JwtAuthenticationFilter;
 import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
 import com.hellofit.hellofit_server.global.security.PepperingPasswordEncoder;
+import com.hellofit.hellofit_server.user.UserRepository;
 import io.swagger.v3.oas.models.OpenAPI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     // 인증되지 않는 사용자 (토큰 unvalid, empty) -> 해당 에러 반환
     @Bean
@@ -40,7 +42,7 @@ public class SecurityConfig {
     // JWT 검증 필터
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(AuthenticationEntryPoint unauthorizedEntryPoint) {
-        return new JwtAuthenticationFilter(jwtTokenProvider, unauthorizedEntryPoint);
+        return new JwtAuthenticationFilter(jwtTokenProvider, unauthorizedEntryPoint, userRepository);
     }
 
     @Bean

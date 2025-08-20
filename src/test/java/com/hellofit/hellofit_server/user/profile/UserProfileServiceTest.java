@@ -69,7 +69,7 @@ class UserProfileServiceTest {
         ArgumentCaptor<UserProfileEntity> captor = ArgumentCaptor.forClass(UserProfileEntity.class);
 
         // when
-        userProfileService.createProfile(userId, request);
+        userProfileService.createProfile(userEntity, request);
 
         // then
         verify(userProfileRepository).save(captor.capture());
@@ -90,7 +90,7 @@ class UserProfileServiceTest {
         CreateUserProfileRequestDto request = CreateUserProfileRequestDto.builder().build();
 
         // when
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userProfileService.createProfile(userId, request));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userProfileService.createProfile(userEntity, request));
 
         // then
         assertThat(ex).hasMessageContaining("User already exists");
@@ -145,7 +145,7 @@ class UserProfileServiceTest {
                 .build();
 
         // when
-        UUID result = userProfileService.patchProfile(userId, request);
+        UUID result = userProfileService.patchProfile(userEntity, request);
 
         // then
         assertThat(result).isEqualTo(userId);
