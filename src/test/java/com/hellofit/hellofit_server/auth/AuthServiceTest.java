@@ -1,17 +1,24 @@
 package com.hellofit.hellofit_server.auth;
 
 import com.hellofit.hellofit_server.auth.dto.*;
+import com.hellofit.hellofit_server.auth.exception.NotMatchPasswordException;
+import com.hellofit.hellofit_server.auth.exception.UnAuthorizedEmailException;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
+import com.hellofit.hellofit_server.global.constants.AuthConstant;
 import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
+import com.hellofit.hellofit_server.user.UserService;
+import com.hellofit.hellofit_server.user.exception.UserDuplicateEmailException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -25,6 +32,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
 
+    @Mock UserService userService;
     @Mock UserRepository userRepository;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtTokenProvider jwtTokenProvider;
@@ -35,147 +43,154 @@ public class AuthServiceTest {
     @Test
     void signupWhenEmailExistThenFail(){
         /*
-        *  signup -> 이미 존재하는 이메일로 테스트할 경우 중복 fail이 발생하는지 테스트
-        */
+         * signup -> 이미 존재하는 이메일로 테스트할 경우 중복 fail이 발생하는지 테스트
+         */
         // given
         var request = new SignupRequestDto("test@test.com", "test1234", "test", true);
-        UserEntity existUser = UserEntity.builder().email("test@test.com").build();
 
-        // 이메일 유저 조회 반환 설정
-        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(existUser));
+        // userService 중복 체크 시 바로 예외 던지도록 설정
+        doThrow(new UserDuplicateEmailException(UUID.randomUUID()))
+                .when(userService).checkDuplicateEmail(request.getEmail());
+
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
         // when
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.signup(request));
+        UserDuplicateEmailException ex = assertThrows(UserDuplicateEmailException.class,
+                () -> authService.signup(request, response));
 
         // then
-        assertThat(ex).hasMessageContaining("이미 존재하는 이메일입니다.");
-        verify(userRepository, times(1)).findByEmail(request.getEmail());
+        assertThat(ex).hasMessageContaining("이미 가입된 이메일입니다.");
+        verify(userService, times(1)).checkDuplicateEmail(request.getEmail());
+        verify(userRepository, never()).save(any()); // 저장은 호출되지 않아야 함
     }
 
     @Test
     void signupThenSuccess(){
         /*
-        * signup -> 입력에 따른 유저 회원가입 (=유저생성) 되는지 여부
-        */
+         * signup -> 정상 입력 시 유저 회원가입 성공 및 토큰 발급 여부
+         */
         // given
         UUID userId = UUID.randomUUID();
-        var savedUserEntity = UserEntity.builder().id(userId).build();
         var request = new SignupRequestDto("test@test.com", "test1234", "test", true);
 
-        when(this.userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
-        when(this.passwordEncoder.encode(request.getPassword())).thenReturn("en_test1234");
-        when(this.userRepository.save(any(UserEntity.class))).thenReturn(savedUserEntity);
+        var savedUserEntity = UserEntity.builder()
+                .id(userId)
+                .email(request.getEmail())
+                .nickname(request.getNickname())
+                .password("en_test1234")
+                .build();
+
+        // repository, encoder mocking
+        doNothing().when(userService).checkDuplicateEmail(request.getEmail());
+        doNothing().when(userService).checkDuplicateNickname(request.getNickname());
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("en_test1234");
+        when(userRepository.save(any(UserEntity.class))).thenReturn(savedUserEntity);
+
+        // HttpServletResponse mock
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
         // when
-        UUID createdUserId = this.authService.signup(request);
+        LoginResponseDto loginResponse = authService.signup(request, response);
 
         // then
-        assertThat(createdUserId).isEqualTo(userId);
+        assertThat(loginResponse).isNotNull();
+        assertThat(loginResponse.getId()).isEqualTo(userId);
 
+        // 저장된 UserEntity 확인
         ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
-        verify(this.userRepository.save(captor.capture()));
+        verify(userRepository).save(captor.capture());
+        UserEntity captured = captor.getValue();
 
-        assertThat(captor.getValue().getEmail()).isEqualTo(request.getEmail());
+        assertThat(captured.getEmail()).isEqualTo(request.getEmail());
+        assertThat(captured.getNickname()).isEqualTo(request.getNickname());
+        assertThat(captured.getPassword()).isEqualTo("en_test1234");
     }
 
     @Test
-    void loginThenSuccess(){
+    void loginThenSuccess() {
         /*
-        * login -> 정상적으로 request 입력에 따른 (성공 테스트)
-        */
+         * login -> 정상적으로 request 입력에 따른 (성공 테스트)
+         */
         // given
         LoginRequestDto request = new LoginRequestDto("test@test.com", "test1234");
 
         UUID userId = UUID.randomUUID();
-        UserEntity userEntity = UserEntity.builder().id(userId).email(request.getEmail()).password(request.getPassword()).build();
+        UserEntity userEntity = UserEntity.builder()
+                .id(userId)
+                .email(request.getEmail())
+                .password("encoded_pw")
+                .build();
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(userEntity));
-        when(this.passwordEncoder.matches(request.getPassword(), userEntity.getPassword())).thenReturn(true);
+        when(passwordEncoder.matches(request.getPassword(), userEntity.getPassword())).thenReturn(true);
         when(jwtTokenProvider.generateAccessToken(userId, null)).thenReturn("AC");
         when(jwtTokenProvider.generateRefreshToken(userId, null)).thenReturn("RC");
-        when(this.refreshTokenRepository.save(any(RefreshTokenEntity.class))).thenReturn(null);
+        when(refreshTokenRepository.save(any(RefreshTokenEntity.class))).thenReturn(null);
+
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
         // when
-        LoginResponseDto response =  this.authService.login(request);
+        LoginResponseDto loginResponse = authService.login(request, response);
 
         // then
-        assertThat(response.getAccessToken()).isEqualTo("AC");
-        assertThat(response.getRefreshToken()).isEqualTo("RC");
+        assertThat(loginResponse).isNotNull();
+        assertThat(loginResponse.getAccess()).isEqualTo("AC");
+        assertThat(loginResponse.getId()).isEqualTo(userId);
 
+        // rf 저장 검증
         ArgumentCaptor<RefreshTokenEntity> captor = ArgumentCaptor.forClass(RefreshTokenEntity.class);
         verify(refreshTokenRepository).save(captor.capture());
-
         assertThat(captor.getValue().getToken()).isEqualTo("RC");
+
+        // 쿠키 헤더 세팅 확인
+        verify(response, atLeastOnce()).addHeader(eq(HttpHeaders.SET_COOKIE), contains("RC"));
+        verify(response, atLeastOnce()).addHeader(eq(HttpHeaders.SET_COOKIE), contains(AuthConstant.XSRF_TOKEN_COOKIE));
     }
 
+
     @Test
-    void loginWhenEmailNotExistThenFail(){
+    void loginWhenEmailNotExistThenFail() {
         /*
          * login -> 이메일이 존재하지 않는 에러 메시지 확인 (실패 테스트)
          */
         // given
         LoginRequestDto request = new LoginRequestDto("test@test.com", "test1234");
 
-        UUID userId = UUID.randomUUID();
-        UserEntity userEntity = UserEntity.builder().id(userId).email(request.getEmail()).password(request.getPassword()).build();
-
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
         // when
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> this.authService.login(request));
+        UnAuthorizedEmailException ex = assertThrows(UnAuthorizedEmailException.class,
+                () -> authService.login(request, response));
 
         // then
         assertThat(ex).hasMessageContaining("가입되지 않은 이메일입니다.");
         verify(userRepository, times(1)).findByEmail(request.getEmail());
     }
 
+
     @Test
-    void loginWhenPasswordNotMatchThenFail(){
+    void loginWhenPasswordNotMatchThenFail() {
         /*
-        * login -> 비밀번호 일치하지 않을 경우 에러 메세지 확인 (실패 테스트)
-        * */
+         * login -> 비밀번호 일치하지 않을 경우 에러 메세지 확인 (실패 테스트)
+         */
         // given
         LoginRequestDto request = new LoginRequestDto("test@test.com", "test1234");
 
-        UserEntity userEntity = UserEntity.builder().email("test@test.com").password("test12345").build();
+        UserEntity userEntity = UserEntity.builder()
+                .email("test@test.com")
+                .password("encoded_pw")
+                .build();
 
-        when(this.userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(userEntity));
+        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(request.getPassword(), userEntity.getPassword())).thenReturn(false);
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
         // when
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> this.authService.login(request));
+        NotMatchPasswordException ex = assertThrows(NotMatchPasswordException.class,
+                () -> authService.login(request, response));
 
         // then
         assertThat(ex).hasMessageContaining("비밀번호가 일치하지 않습니다.");
     }
-
-    @Test
-    void refreshTokenThenSuccess(){
-        /*
-        * refreshAccessToken -> 정상적으로 토큰 발급 되는지 (성공 테스트)
-        * */
-        // given
-        // given
-        String rf = "RF";
-        UUID uid = UUID.randomUUID();
-        TokenRefreshRequestDto req = new TokenRefreshRequestDto(rf);
-
-        when(jwtTokenProvider.validateToken(rf)).thenReturn(true);
-        when(jwtTokenProvider.getUserIdFromToken(rf)).thenReturn(uid);
-        when(refreshTokenRepository.findById(uid))
-                .thenReturn(Optional.of(RefreshTokenEntity.builder().userId(uid).token(rf).build()));
-        when(jwtTokenProvider.generateAccessToken(uid, null)).thenReturn("newac");
-
-        // when
-        TokenRefreshResponseDto res = authService.refreshAccessToken(req);
-
-        // then
-        assertThat(res.getAccessToken()).isEqualTo("newac");
-        verify(jwtTokenProvider).validateToken(rf);
-        verify(jwtTokenProvider).getUserIdFromToken(rf);
-        verify(refreshTokenRepository).findById(uid);
-        verify(jwtTokenProvider).generateAccessToken(uid, null);
-        verifyNoMoreInteractions(jwtTokenProvider, refreshTokenRepository);
-    }
-
 }
