@@ -113,6 +113,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return pathMatcher.match("/auth/login", path)
                 || pathMatcher.match("/auth/signup", path)
                 || pathMatcher.match("/auth/xc", path)
+                || pathMatcher.match("/auth/check-nickname", path)
                 || pathMatcher.match("/auth/refresh", path)
                 || pathMatcher.match("/v3/api-docs/**", path)
                 || pathMatcher.match("/swagger-ui/**", path)

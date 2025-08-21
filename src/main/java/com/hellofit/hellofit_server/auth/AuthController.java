@@ -118,4 +118,17 @@ public class AuthController {
         Boolean result = authService.getXSRFToken(response);
         return ResponseEntity.ok(result);
     }
+
+    //check-nickname?nickname=hong
+    @Operation(summary = "닉네임 중복 체크 API")
+    @ApiResponse(
+            responseCode = "200",
+            description = "true -> 중복 닉네임",
+            content = @Content(schema = @Schema(implementation = AuthResponseDto.NicknameDuplicate.class))
+    )
+    @GetMapping("/check-nickname")
+    @SecurityRequirements(value = {})
+    public ResponseEntity<AuthResponseDto.NicknameDuplicate> checkNicknameDuplicate(@RequestParam String nickname){
+        return ResponseEntity.ok(authService.checkNicknameDuplicate(nickname));
+    }
 }

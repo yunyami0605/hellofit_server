@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,11 +17,4 @@ public class LoginResponseDto {
             example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     )
     private String access;
-
-    @Schema(
-            description = "user id",
-            example = "1234432..."
-    )
-    private UUID id;
-
 }

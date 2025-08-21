@@ -11,6 +11,7 @@ import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
 import com.hellofit.hellofit_server.user.UserService;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
+import com.hellofit.hellofit_server.user.exception.UserDuplicateNicknameException;
 import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -89,7 +90,7 @@ public class AuthService {
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         // 4. ac, rf 토큰 반환 반환
-        return LoginResponseDto.builder().access(accessToken).id(user.getId()).build();
+        return LoginResponseDto.builder().access(accessToken).build();
     }
 
     // 회원가입
@@ -205,6 +206,15 @@ public class AuthService {
     // 로그아웃 -> rf token 제거
     public void logout(UUID userId){
         refreshTokenRepository.deleteById(userId);
+    }
+
+    /*
+    * 닉네임 중복 여부 확인 서비스 로직
+    * */
+    public AuthResponseDto.NicknameDuplicate checkNicknameDuplicate(String nickname){
+        Boolean isDuplicate =  this.userRepository.findByNickname(nickname).isPresent();
+
+        return AuthResponseDto.NicknameDuplicate.builder().isDuplicate(isDuplicate).build();
     }
 
     /*
