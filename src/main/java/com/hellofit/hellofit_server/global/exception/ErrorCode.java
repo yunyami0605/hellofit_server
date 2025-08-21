@@ -59,8 +59,11 @@ public enum ErrorCode {
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, ErrorMessage.TOKEN_EXPIRED),
 
     @Schema(description = ErrorMessage.TOKEN_INVALID)
-    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, ErrorMessage.TOKEN_INVALID);
+    TOKEN_INVALID(HttpStatus.UNAUTHORIZED, ErrorMessage.TOKEN_INVALID),
 
+    // 잘못된 로그인 폼으로 접근 시
+    @Schema(description = ErrorMessage.WRONG_LOGIN_FORM)
+    WRONG_LOGIN_FORM(HttpStatus.UNAUTHORIZED, ErrorMessage.WRONG_LOGIN_FORM);
 
     private final HttpStatus status;
     private final String message;

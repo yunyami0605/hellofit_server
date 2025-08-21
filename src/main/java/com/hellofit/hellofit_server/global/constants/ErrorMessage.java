@@ -19,6 +19,7 @@ public class ErrorMessage {
     public static final String FORBIDDEN = "권한이 없습니다.";
     public static final String UNAUTHORIZED_EMAIL = "가입되지 않은 이메일입니다.";
     public static final String NOT_MATCH_PASSWORD = "비밀번호가 일치하지 않습니다.";
+    public static final String WRONG_LOGIN_FORM = "아이디 또는 비밀번호가 잘못 되었습니다.";
     public static final String TOKEN_EXPIRED = "토큰이 만료되었습니다.";
     public static final String TOKEN_INVALID = "유효하지 않은 토큰입니다.";
 

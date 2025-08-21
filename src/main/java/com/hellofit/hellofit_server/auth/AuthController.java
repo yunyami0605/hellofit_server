@@ -67,10 +67,7 @@ public class AuthController {
                             schema = @Schema(implementation = ApiErrorResponse.class),
                             examples = {
                                     @ExampleObject(
-                                            name = ErrorMessage.UNAUTHORIZED_EMAIL
-                                    ),
-                                    @ExampleObject(
-                                            name = ErrorMessage.NOT_MATCH_PASSWORD
+                                            name = ErrorMessage.WRONG_LOGIN_FORM
                                     )
                             }
                     )

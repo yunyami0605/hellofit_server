@@ -2,10 +2,7 @@ package com.hellofit.hellofit_server.auth;
 
 import com.hellofit.hellofit_server.auth.constants.TokenStatus;
 import com.hellofit.hellofit_server.auth.dto.*;
-import com.hellofit.hellofit_server.auth.exception.NotMatchPasswordException;
-import com.hellofit.hellofit_server.auth.exception.TokenExpiredException;
-import com.hellofit.hellofit_server.auth.exception.TokenInvalidException;
-import com.hellofit.hellofit_server.auth.exception.UnAuthorizedEmailException;
+import com.hellofit.hellofit_server.auth.exception.*;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
 import com.hellofit.hellofit_server.global.constants.AuthConstant;
@@ -126,11 +123,11 @@ public class AuthService {
     public LoginResponseDto login(LoginRequestDto request, HttpServletResponse response) {
         // 1. 이메일로 유저 조회 -> 없으면 에러 반환
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UnAuthorizedEmailException());
+                .orElseThrow(() -> new WrongLoginFormException(request.getEmail()));
 
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
-            throw new NotMatchPasswordException();
+            throw new WrongLoginFormException(request.getPassword());
         }
 
         // TODO: 나중에 디바이스 별 로그인 로직 추가하면, 로직 수정하기
