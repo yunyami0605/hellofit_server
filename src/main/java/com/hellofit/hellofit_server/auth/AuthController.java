@@ -113,9 +113,9 @@ public class AuthController {
             description = "토큰 발급 성공"
     )
     @SecurityRequirements(value = {})
-    @GetMapping("/xc")
-    public ResponseEntity<Boolean> getXSRFToken(HttpServletResponse response){
-        Boolean result = authService.getXSRFToken(response);
+    @PostMapping("/xc")
+    public ResponseEntity<Boolean> postXSRFToken(HttpServletResponse response){
+        Boolean result = authService.postXSRFToken(response);
         return ResponseEntity.ok(result);
     }
 

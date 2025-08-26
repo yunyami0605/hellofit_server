@@ -149,7 +149,7 @@ public class AuthService {
         return Optional.empty();
     }
 
-    public Boolean getXSRFToken(HttpServletResponse response){
+    public Boolean postXSRFToken(HttpServletResponse response){
         setXSRFToken(response);
 
         return true;
