@@ -3,6 +3,17 @@ spring:
     activate:
       on-profile: dev
 
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      s3:
+        enabled: true
+        bucket: hellofit-bucket
+      credentials:
+        access-key: ${AWS_ACCESS_KEY} // sdk에서 자동으로 가져옴
+        secret-key: ${AWS_SECRET_KEY}
+
 cors:
   allowed-origins:
     - http://localhost:3000

@@ -50,6 +50,13 @@ dependencies {
 
 	// env 설정 추가
 	implementation("me.paulschwarz:spring-dotenv:3.0.0")
+
+
+    // BOM (버전 관리)
+    implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:3.4.0"))
+
+    // 모듈
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3")
 }
 
 tasks.withType<Test> {
