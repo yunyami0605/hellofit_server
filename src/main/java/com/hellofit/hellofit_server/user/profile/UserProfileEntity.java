@@ -38,7 +38,7 @@ public class UserProfileEntity  {
     @Column(nullable = false)
     private Double weight;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Integer sleepMinutes;
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -49,11 +49,11 @@ public class UserProfileEntity  {
                     foreignKey = @ForeignKey(name = "fk_upf_user")
             )
     )
-    @Column(name = "food", length = 100)
+    @Column(name = "food", length = 100, nullable = true)
 
     private Set<String> forbiddenFoods = new HashSet<>();
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Integer exerciseMinutes;
 
     public enum AgeGroup { AGE_10S, AGE_20S, AGE_30S, AGE_40S, AGE_50S, AGE_60S, AGE_70S, AGE_80S, AGE_90S }

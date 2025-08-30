@@ -2,6 +2,7 @@ package com.hellofit.hellofit_server.user.profile;
 
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
+import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import com.hellofit.hellofit_server.user.profile.dto.CreateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UpdateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UserProfileResponse;
@@ -34,8 +35,11 @@ public class UserProfileService {
             throw new UserProfileException.UserProfileDuplicate("createProfile", user.getId());
         }
 
+        UserEntity managedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new UserNotFoundException(user.getId()));
+
         UserProfileEntity profile = UserProfileEntity.builder()
-                .user(user)
+                .user(managedUser)
                 .ageGroup(request.getAgeGroup())
                 .gender(request.getGender())
                 .height(request.getHeight())

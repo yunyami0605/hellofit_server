@@ -24,24 +24,22 @@ public class CreateUserProfileRequestDto {
     private UserProfileEntity.Gender gender;
 
     @NotNull
-    @DecimalMin("50.0")
-    @DecimalMax("300.0")
+    @DecimalMin("1.0")
+    @DecimalMax("1000.0")
     @Schema(description = "키 (cm)", example = "175.5", minimum = "50.0", maximum = "300.0")
     private Double height;
 
     @NotNull
-    @DecimalMin("20.0")
-    @DecimalMax("500.0")
+    @DecimalMin("1.0")
+    @DecimalMax("300.0")
     @Schema(description = "몸무게 (kg)", example = "70.0", minimum = "20.0", maximum = "500.0")
     private Double weight;
 
-    @NotNull
     @Min(0)
     @Max(1440)
     @Schema(description = "수면 시간 (분)", example = "420", minimum = "0", maximum = "1440")
     private Integer sleepMinutes;
 
-    @NotNull
     @Min(0)
     @Max(1440)
     @Schema(description = "운동 시간 (분)", example = "60", minimum = "0", maximum = "1440")
