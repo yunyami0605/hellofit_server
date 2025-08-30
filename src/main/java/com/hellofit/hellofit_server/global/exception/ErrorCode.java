@@ -23,6 +23,10 @@ public enum ErrorCode {
     @Schema(description = ErrorMessage.INTERNAL_SERVER_ERROR)
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, ErrorMessage.INTERNAL_SERVER_ERROR),
 
+    // 접근 권한이 없는 요청 (role, 비작성자)
+    @Schema(description = ErrorMessage.FORBIDDEN)
+    FORBIDDEN(HttpStatus.FORBIDDEN, ErrorMessage.FORBIDDEN),
+
     // ===== USER 관련 =====
     @Schema(description = ErrorMessage.USER_NOT_FOUND)
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.USER_NOT_FOUND),
@@ -43,10 +47,7 @@ public enum ErrorCode {
     // ===== Auth 관련 =====
     @Schema(description = ErrorMessage.UNAUTHORIZED)
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED),
-
-    @Schema(description = ErrorMessage.FORBIDDEN)
-    FORBIDDEN(HttpStatus.FORBIDDEN, ErrorMessage.FORBIDDEN),
-
+    
     // 가입되지 않은 이메일로 접근 시
     @Schema(description = ErrorMessage.UNAUTHORIZED_EMAIL)
     UNAUTHORIZED_EMAIL(HttpStatus.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED_EMAIL),
@@ -63,7 +64,11 @@ public enum ErrorCode {
 
     // 잘못된 로그인 폼으로 접근 시
     @Schema(description = ErrorMessage.WRONG_LOGIN_FORM)
-    WRONG_LOGIN_FORM(HttpStatus.UNAUTHORIZED, ErrorMessage.WRONG_LOGIN_FORM);
+    WRONG_LOGIN_FORM(HttpStatus.UNAUTHORIZED, ErrorMessage.WRONG_LOGIN_FORM),
+
+    // 게시글을 찾을 수 없는 경우
+    @Schema(description = ErrorMessage.POST_NOT_FOUND)
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.POST_NOT_FOUND);
 
     private final HttpStatus status;
     private final String message;

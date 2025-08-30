@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -110,13 +111,27 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(body);
     }
 
+
+
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ApiErrorResponse> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
         ApiErrorResponse body = ApiErrorResponse.of(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED_MEDIA_TYPE", traceId());
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(body);
     }
 
-    // 10) 마지막 방어선
+    // 10) 존재하지 않는 URL (404 Not Found)
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotFound(NoHandlerFoundException ex) {
+        ApiErrorResponse body = ApiErrorResponse.of(
+                HttpStatus.NOT_FOUND,
+                "NOT_FOUND",
+                traceId(),
+                Map.of("path", ex.getRequestURL())
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
+    }
+
+    // 11) 마지막 방어선
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleEtc(Exception ex) {
         log.error("Unhandled exception", ex);
