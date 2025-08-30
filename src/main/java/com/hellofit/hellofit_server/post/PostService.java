@@ -8,6 +8,7 @@ import com.hellofit.hellofit_server.image.dto.ImageResponseDto;
 import com.hellofit.hellofit_server.post.dto.PostRequestDto;
 import com.hellofit.hellofit_server.post.dto.PostResponseDto;
 import com.hellofit.hellofit_server.post.exception.PostException;
+import com.hellofit.hellofit_server.post.image.PostImageEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,106 +32,137 @@ public class PostService {
     private final AwsService awsService;
 
     // 유저 본인 게시글 목록 조회
-    public List<PostResponseDto.Summary> getPostsByUser(UserEntity user){
+    public List<PostResponseDto.Summary> getPostsByUser(UserEntity user) {
         return postRepository.findByUserId(user.getId())
-                .stream()
-                .map((_posts) -> {
-                            List<String> presignedImages = _posts.getImages().stream().map((_image) ->
-                                awsService.presignedGetUrl(_image.getObjectKey())
-                            ).toList();
+            .stream()
+            .map((_posts) -> {
+                    List<String> presignedImages = _posts.getPostImages()
+                        .stream()
+                        .map((_image) ->
+                            awsService.presignedGetUrl(_image.getImage()
+                                .getObjectKey())
+                        )
+                        .toList();
 
-                            return PostResponseDto.Summary.from(_posts, presignedImages);
-                        }
-                ).toList();
+                    return PostResponseDto.Summary.from(_posts, presignedImages);
+                }
+            )
+            .toList();
     }
 
     // 게시글 목록 조회
-    public List<PostResponseDto.SummaryList> getPosts(){
+    public List<PostResponseDto.SummaryList> getPosts() {
 
         return postRepository.findAll()
-                .stream()
-                .map((_posts) -> {
-                        List<String> presignedImages = _posts.getImages().stream().map((_image) ->
-                            awsService.presignedGetUrl(_image.getObjectKey())
-                        ).toList();
+            .stream()
+            .map((_posts) -> {
+                    List<String> presignedImages = _posts.getPostImages()
+                        .stream()
+                        .map((_image) ->
+                            awsService.presignedGetUrl(_image.getImage()
+                                .getObjectKey())
+                        )
+                        .toList();
 
-                        return PostResponseDto.SummaryList.from(_posts, presignedImages);
-                    }
-                ).toList();
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages);
+                }
+            )
+            .toList();
     }
 
     /**
      * 게시글 조회
      */
-    public PostResponseDto.Summary getPost(UUID id){
-        return postRepository.findById(id).map((_post) -> {
+    public PostResponseDto.Summary getPost(UUID id) {
+        return postRepository.findById(id)
+            .map((_post) -> {
 
-            List<String> presignedImages = _post.getImages().stream().map((_image) ->
-                awsService.presignedGetUrl(_image.getObjectKey())
-            ).toList();
+                List<String> presignedImages = _post.getPostImages()
+                    .stream()
+                    .map((_image) ->
+                        awsService.presignedGetUrl(_image.getImage()
+                            .getObjectKey())
+                    )
+                    .toList();
 
-            return PostResponseDto.Summary.from(_post, presignedImages);
-        }).orElseThrow(() -> new PostException.NotFound("PostSevice -> getPost", id.toString()) );
+                return PostResponseDto.Summary.from(_post, presignedImages);
+            })
+            .orElseThrow(() -> new PostException.NotFound("PostSevice -> getPost", id.toString()));
     }
 
     /**
      * 게시글 검색
+     *
      * @param keyword : 검색 키워드
      */
-    public List<PostResponseDto.Summary> getSearchPosts(String keyword){
-        return postRepository.findByTitleContaining(keyword).stream().map((_post) -> {
-            List<String> presignedImages = _post.getImages().stream().map((_image) ->
-                awsService.presignedGetUrl(_image.getObjectKey())
-            ).toList();
+    public List<PostResponseDto.Summary> getSearchPosts(String keyword) {
+        return postRepository.findByTitleContaining(keyword)
+            .stream()
+            .map((_post) -> {
+                List<String> presignedImages = _post.getPostImages()
+                    .stream()
+                    .map((_image) ->
+                        awsService.presignedGetUrl(_image.getImage()
+                            .getObjectKey())
+                    )
+                    .toList();
 
-            return PostResponseDto.Summary.from(_post, presignedImages);
-        }).toList();
+                return PostResponseDto.Summary.from(_post, presignedImages);
+            })
+            .toList();
     }
 
     /*
-    * 게시글 등록 서비스 로직
-    * */
+     * 게시글 등록 서비스 로직
+     * */
     @Transactional
     public MutationResponse createPost(
-            PostRequestDto.Create request,
-            UserEntity user
-    ){
+        PostRequestDto.Create request,
+        UserEntity user
+    ) {
         // 1. post 객체 생성
         PostEntity post = PostEntity.builder()
-                .title(request.getTitle())
-                .content(request.getContent())
-                .user(user)
-                .build();
+            .title(request.getTitle())
+            .content(request.getContent())
+            .user(user)
+            .build();
 
         // 2. 이미지 생성 후, 게시글 연결
-        IntStream.range(0, request.getImageKeys().size())
-                        .forEach((i) -> {
-                            String key = request.getImageKeys().get(i);
-                            ImageEntity image = ImageEntity
-                                    .builder()
-                                    .objectKey(key)
-                                    .sortOrder(i)
-                                    .build();
+        IntStream.range(0, request.getImageKeys()
+                .size())
+            .forEach((i) -> {
+                String key = request.getImageKeys()
+                    .get(i);
 
-                            post.addImage(image);
-                        });
+                ImageEntity image = ImageEntity
+                    .builder()
+                    .objectKey(key)
+                    .build();
+
+                post.addImage(image, i);
+            });
 
         // 3. 저장
         postRepository.save(post);
 
-        return MutationResponse.builder().id(post.getId()).build();
+        return MutationResponse.builder()
+            .id(post.getId())
+            .build();
     }
 
     /*
-    * 게시글 수정 서비스 로직
-    * */
+     * 게시글 수정 서비스 로직
+     * */
     @Transactional
-    public MutationResponse updatePost(UUID userId, UUID postId ,PostRequestDto.Update requestDto){
+    public MutationResponse updatePost(UUID userId, UUID postId, PostRequestDto.Update requestDto) {
         // 1. 게시글 조회
-        PostEntity post = postRepository.findById(postId).orElseThrow(() -> new PostException.NotFound("update post", postId.toString()));
+        PostEntity post = postRepository.findById(postId)
+            .orElseThrow(() -> new PostException.NotFound("update post", postId.toString()));
 
         // 2. 작성자인지 검증
-        if(!post.getUser().getId().equals(userId)){
+        if (!post.getUser()
+            .getId()
+            .equals(userId)) {
             throw new CommonException.Forbidden("updatePost", userId.toString());
         }
 
@@ -139,57 +171,71 @@ public class PostService {
         post.setContent(requestDto.getContent());
 
         // 4. db 이미지 가져오기
-        List<ImageEntity> currentImages = post.getImages();
+        List<PostImageEntity> currentImages = post.getPostImages();
         Set<String> currentKeys = currentImages.stream()
-                .map(ImageEntity::getObjectKey)
-                .collect(Collectors.toSet());
+            .map((_image) -> _image.getImage()
+                .getObjectKey())
+            .collect(Collectors.toSet());
 
         // 5. request 이미지 중복 제거
         List<String> newKeys = requestDto.getImageKeys();
         Set<String> newKeySet = new HashSet<>(newKeys);
 
         // 6. 수정 요청에 없는 이미지들 제거 (orphan = true)
-        currentImages.removeIf(img -> !newKeySet.contains(img.getObjectKey()));
+        currentImages.removeIf(img -> !newKeySet.contains(img.getImage()
+            .getObjectKey()));
 
         // 7. 수정 요청에 새로 추가된 이미지 연결
         IntStream.range(0, newKeys.size())
-                .forEach(i -> {
-                    String key = newKeys.get(i);
-                    if (!currentKeys.contains(key)) {
-                        // 현재 키 목록 중, 없으면 새로 생성 후 추가
-                        ImageEntity newImage = ImageEntity.builder()
-                                .objectKey(key)
-                                .sortOrder(i)
-                                .build();
-                        post.addImage(newImage);
-                    }
-                });
+            .forEach(i -> {
+                String key = newKeys.get(i);
+                if (!currentKeys.contains(key)) {
+                    // 현재 키 목록 중, 없으면 새로 생성 후 추가
+                    ImageEntity newImage = ImageEntity.builder()
+                        .objectKey(key)
+                        .build();
+
+                    post.addImage(newImage, i);
+                }
+            });
 
 
         // 8. 요청 순서에 따라 이미지 순서 재정렬
         IntStream.range(0, newKeys.size())
-                .forEach(i -> {
-                    String key = newKeys.get(i);
-                    currentImages.stream()
-                            .filter(img -> img.getObjectKey().equals(key))
-                            .findFirst()
-                            .ifPresent(img -> img.setSortOrder(i));
-                });
+            .forEach(i -> {
+                String key = newKeys.get(i);
 
-        return MutationResponse.builder().id(postId).build();
+                currentImages.stream()
+                    .filter(img -> img.getImage()
+                        .getObjectKey()
+                        .equals(key))
+                    .findFirst()
+                    .ifPresent(img -> img.setSortOrder(i));
+            });
+
+        return MutationResponse.builder()
+            .id(postId)
+            .build();
     }
 
     /*
      * 게시글 수정 전 데이터 조회 로직
      * */
-    public PostResponseDto.PatchData getPatchPostOne(UUID id){
-        PostEntity post = postRepository.findById(id).orElseThrow(() -> new PostException.NotFound("getPatchPostOne", id.toString()));
+    public PostResponseDto.PatchData getPatchPostOne(UUID id) {
+        PostEntity post = postRepository.findById(id)
+            .orElseThrow(() -> new PostException.NotFound("getPatchPostOne", id.toString()));
 
-        List<ImageResponseDto.DataBeforeMutation> images = post.getImages().stream().map((v) -> {
-            String presignedUrl = awsService.presignedGetUrl(v.getObjectKey());
+        List<ImageResponseDto.DataBeforeMutation> images = post.getPostImages()
+            .stream()
+            .map((_images) -> {
+                String objectKey = _images.getImage()
+                    .getObjectKey();
 
-            return ImageResponseDto.DataBeforeMutation.fromEntity(v, presignedUrl);
-        }).toList();
+                String presignedUrl = awsService.presignedGetUrl(objectKey);
+
+                return ImageResponseDto.DataBeforeMutation.fromEntity(objectKey, presignedUrl);
+            })
+            .toList();
 
         return PostResponseDto.PatchData.fromEntity(post, images);
     }

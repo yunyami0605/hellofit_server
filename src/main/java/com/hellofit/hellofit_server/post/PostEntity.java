@@ -1,6 +1,7 @@
 package com.hellofit.hellofit_server.post;
 
 import com.hellofit.hellofit_server.image.ImageEntity;
+import com.hellofit.hellofit_server.post.image.PostImageEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -12,8 +13,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name="posts")
-@Getter @Setter @Builder
+@Table(name = "posts")
+@Getter
+@Setter
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostEntity {
@@ -39,16 +42,16 @@ public class PostEntity {
 
     @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ImageEntity> images = new ArrayList<>();
+    private List<PostImageEntity> postImages = new ArrayList<>();
 
-    public void addImage(ImageEntity _image){
-        images.add(_image);
-        _image.setPost(this);
-    }
+    public void addImage(ImageEntity _image, int sortOrder) {
+        PostImageEntity mapping = PostImageEntity.builder()
+            .post(this)
+            .image(_image)
+            .sortOrder(sortOrder)
+            .build();
 
-    public void removeImage(ImageEntity _image){
-        images.remove(_image);
-        _image.setPost(null);
+        postImages.add(mapping);
     }
 
 //    /** 댓글 */

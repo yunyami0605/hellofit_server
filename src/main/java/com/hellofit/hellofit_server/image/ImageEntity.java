@@ -8,11 +8,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "images")
-@Setter
 @Getter
-@Builder
-@AllArgsConstructor
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class ImageEntity {
 
     @Id
@@ -21,10 +21,4 @@ public class ImageEntity {
 
     @Column(nullable = false)
     private String objectKey;
-
-    private int sortOrder;
-
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "post_id")
-    private PostEntity post;
 }

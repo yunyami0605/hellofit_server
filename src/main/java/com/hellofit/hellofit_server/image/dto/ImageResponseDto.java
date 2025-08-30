@@ -19,15 +19,15 @@ public class ImageResponseDto {
     @Getter
     @AllArgsConstructor
     @Builder
-    public static class DataBeforeMutation{
+    public static class DataBeforeMutation {
         private String objectKey; // DB에 저장된 S3 object key
         private String presignedUrl; // presigned URL
 
-        public static DataBeforeMutation fromEntity(ImageEntity entity, String presignedUrl){
+        public static DataBeforeMutation fromEntity(String objectKey, String presignedUrl) {
             return DataBeforeMutation.builder()
-                    .objectKey(entity.getObjectKey())
-                    .presignedUrl(presignedUrl)
-                    .build();
+                .objectKey(objectKey)
+                .presignedUrl(presignedUrl)
+                .build();
         }
     }
 
@@ -37,11 +37,13 @@ public class ImageResponseDto {
     @Getter
     @Builder
     @AllArgsConstructor
-    public static class Presigned{
+    public static class Presigned {
         private String presignedUrl;
 
-        public static Presigned from(String url){
-            return Presigned.builder().presignedUrl(url).build();
+        public static Presigned from(String url) {
+            return Presigned.builder()
+                .presignedUrl(url)
+                .build();
         }
     }
 }
