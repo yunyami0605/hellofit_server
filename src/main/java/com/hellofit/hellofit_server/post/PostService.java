@@ -181,11 +181,21 @@ public class PostService {
         List<String> newKeys = requestDto.getImageKeys();
         Set<String> newKeySet = new HashSet<>(newKeys);
 
-        // 6. 수정 요청에 없는 이미지들 제거 (orphan = true)
-        currentImages.removeIf(img -> !newKeySet.contains(img.getImage()
+        // 6. s3 객체 제거
+        currentImages.forEach((_image) -> {
+            String _objectKey = _image.getImage()
+                .getObjectKey();
+
+            if (!newKeySet.contains(_objectKey)) {
+                awsService.deleteObject(_objectKey);
+            }
+        });
+
+        // 7. 수정 요청에 없는 이미지들 제거 (orphan = true)
+        currentImages.removeIf(_image -> !newKeySet.contains(_image.getImage()
             .getObjectKey()));
 
-        // 7. 수정 요청에 새로 추가된 이미지 연결
+        // 8. 수정 요청에 새로 추가된 이미지 연결
         IntStream.range(0, newKeys.size())
             .forEach(i -> {
                 String key = newKeys.get(i);
@@ -200,7 +210,7 @@ public class PostService {
             });
 
 
-        // 8. 요청 순서에 따라 이미지 순서 재정렬
+        // 9. 요청 순서에 따라 이미지 순서 재정렬
         IntStream.range(0, newKeys.size())
             .forEach(i -> {
                 String key = newKeys.get(i);
@@ -218,13 +228,49 @@ public class PostService {
             .build();
     }
 
+    /**
+     * 게시글 한개 삭제 서비스 로직
+     *
+     * @param authorId 작성자 id
+     * @param id       게시글 id
+     */
+    @Transactional
+    public MutationResponse deletePostOne(UUID authorId, UUID id) {
+        // 1. 게시글 데이터 조회
+        PostEntity post = postRepository.findById(id)
+            .orElseThrow(() -> new PostException.NotFound("post service -> deletePostOne", id.toString()));
+
+        // 2. 작성자인지 체크
+        if (!post.getUser()
+            .getId()
+            .equals(authorId)) {
+            throw new CommonException.Forbidden("post service -> deletePostOne", authorId.toString());
+        }
+
+        // 3. s3 객체 제거
+        post.getPostImages()
+            .forEach((_image) ->
+                awsService.deleteObject(_image.getImage()
+                    .getObjectKey())
+            );
+
+        // 4. 삭제
+        postRepository.delete(post);
+
+        return MutationResponse.builder()
+            .id(id)
+            .build();
+    }
+
     /*
      * 게시글 수정 전 데이터 조회 로직
      * */
     public PostResponseDto.PatchData getPatchPostOne(UUID id) {
+        // 1. 게시글 조회
         PostEntity post = postRepository.findById(id)
             .orElseThrow(() -> new PostException.NotFound("getPatchPostOne", id.toString()));
 
+        // 2. aws s3에 presignedUrl 요청
         List<ImageResponseDto.DataBeforeMutation> images = post.getPostImages()
             .stream()
             .map((_images) -> {
@@ -233,6 +279,7 @@ public class PostService {
 
                 String presignedUrl = awsService.presignedGetUrl(objectKey);
 
+                // 최종 응답 데이터에 통합
                 return ImageResponseDto.DataBeforeMutation.fromEntity(objectKey, presignedUrl);
             })
             .toList();

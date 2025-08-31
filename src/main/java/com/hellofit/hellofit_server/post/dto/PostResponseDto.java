@@ -18,23 +18,23 @@ public class PostResponseDto {
     @Getter
     @Setter
     @Builder
-    public static class Summary{
+    public static class Summary {
         private String title;
         private String content;
         private UUID id;
         private List<String> images;
-        private UserMappingResponseDto.Summary user;
+        private UserMappingResponseDto.Summary author;
         private LocalDateTime updatedAt;
 
-        public static Summary from(PostEntity post, List<String> images){
+        public static Summary from(PostEntity post, List<String> images) {
             return Summary.builder()
-                    .id(post.getId())
-                    .title(post.getTitle())
-                    .content(post.getContent())
-                    .user(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
-                    .images(images)
-                    .updatedAt(post.getUpdatedAt())
-                    .build();
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .author(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
+                .images(images)
+                .updatedAt(post.getUpdatedAt())
+                .build();
         }
     }
 
@@ -44,43 +44,43 @@ public class PostResponseDto {
     @Getter
     @Setter
     @Builder
-    public static class SummaryList{
+    public static class SummaryList {
         private String title;
         private String content;
         private UUID id;
         private List<String> images;
-        private UserMappingResponseDto.Summary user;
+        private UserMappingResponseDto.Summary author;
         private LocalDateTime updatedAt;
 
-        public static SummaryList from(PostEntity post, List<String> images){
+        public static SummaryList from(PostEntity post, List<String> images) {
             return SummaryList.builder()
-                    .id(post.getId())
-                    .title(post.getTitle())
-                    .content(post.getContent())
-                    .user(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
-                    .images(images)
-                    .updatedAt(post.getUpdatedAt())
-                    .build();
+                .id(post.getId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .author(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
+                .images(images)
+                .updatedAt(post.getUpdatedAt())
+                .build();
         }
     }
 
     @Getter
     @Builder
-    public static class PatchData{
+    public static class PatchData {
         private String title;
         private String content;
         private UUID id;
         private LocalDateTime updatedAt;
         private List<ImageResponseDto.DataBeforeMutation> images;
 
-        public static PatchData fromEntity(PostEntity post, List<ImageResponseDto.DataBeforeMutation> images){
+        public static PatchData fromEntity(PostEntity post, List<ImageResponseDto.DataBeforeMutation> images) {
             return PatchData.builder()
-                    .title(post.getTitle())
-                    .content(post.getContent())
-                    .id(post.getId())
-                    .images(images)
-                    .updatedAt(post.getUpdatedAt())
-                    .build();
+                .title(post.getTitle())
+                .content(post.getContent())
+                .id(post.getId())
+                .images(images)
+                .updatedAt(post.getUpdatedAt())
+                .build();
         }
     }
 }
