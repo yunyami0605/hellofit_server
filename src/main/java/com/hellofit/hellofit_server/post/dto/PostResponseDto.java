@@ -24,6 +24,7 @@ public class PostResponseDto {
         private UUID id;
         private List<String> images;
         private UserMappingResponseDto.Summary author;
+        private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
         public static Summary from(PostEntity post, List<String> images) {
@@ -33,6 +34,7 @@ public class PostResponseDto {
                 .content(post.getContent())
                 .author(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
                 .images(images)
+                .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
         }
@@ -50,6 +52,7 @@ public class PostResponseDto {
         private UUID id;
         private List<String> images;
         private UserMappingResponseDto.Summary author;
+        private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
         public static SummaryList from(PostEntity post, List<String> images) {
@@ -59,6 +62,7 @@ public class PostResponseDto {
                 .content(post.getContent())
                 .author(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
                 .images(images)
+                .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
         }
@@ -70,7 +74,6 @@ public class PostResponseDto {
         private String title;
         private String content;
         private UUID id;
-        private LocalDateTime updatedAt;
         private List<ImageResponseDto.DataBeforeMutation> images;
 
         public static PatchData fromEntity(PostEntity post, List<ImageResponseDto.DataBeforeMutation> images) {
@@ -79,7 +82,6 @@ public class PostResponseDto {
                 .content(post.getContent())
                 .id(post.getId())
                 .images(images)
-                .updatedAt(post.getUpdatedAt())
                 .build();
         }
     }

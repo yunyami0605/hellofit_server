@@ -1,22 +1,84 @@
 spring:
-  config:
-    activate:
-      on-profile: prod
+    config:
+        import: aws-secretsmanager:hellofit/prod/db
 
-# 운영 DB/비밀값은 환경변수로 주입하는 걸 권장
-spring:
-  datasource:
-    url: jdbc:mariadb://<prod-host>:3306/hellofit_db
-    username: hellofit_user
-    password: ${DB_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: validate   # 운영은 update 대신 validate(+ Flyway 권장)
+        activate:
+            on-profile: prod
 
-jwt:
-  secret: ${JWT_SECRET}    # 운영은 반드시 환경변수로
+    datasource:
+        url: jdbc:mariadb://13.125.181.109:3306/hellofit_db
+        username: hellofit_user
+        password: Fit@App-P6r9o5d4%23!
+        driver-class-name: org.mariadb.jdbc.Driver
+
+    cloud:
+        aws:
+            region:
+                static: ap-northeast-2
+            s3:
+                enabled: true
+                bucket: hellofit-bucket
+            credentials:
+                access-key: ${AWS_ACCESS_KEY} # sdk에서 자동으로 가져옴
+                secret-key: ${AWS_SECRET_KEY}
+            secretsmanager:
+                enabled: true
+
+            #        datasource:
+            #            url: jdbc:${hellofit-prod-db.engine}://${hellofit-prod-db.host}:${hellofit-prod-db.port}/${hellofit-prod-db.dbname}
+            #            username: ${hellofit-prod-db.username}
+        #            password: ${hellofit-prod-db.password}
+        #            driver-class-name: org.mariadb.jdbc.Driver
+
+    #    datasource:
+    #        url: jdbc:${engine}://${host}:${port}/${dbname}
+    #        username: ${username}
+    #        password: ${password}
+    #        driver-class-name: org.mariadb.jdbc.Driver
+
+    jpa:
+        hibernate:
+            ddl-auto: validate
+
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+        database-platform: org.hibernate.dialect.MariaDBDialect
+
+    mvc:
+        throw-exception-if-no-handler-found: true
+    web:
+        resources:
+            add-mappings: false
 
 cors:
-  allowed-origins:
-    - https://www.hellofit.com
-    - https://app.hellofit.com
+    allowed-origins:
+        - https://ai-hellofit-frontend.vercel.app
+
+springdoc:
+    api-docs:
+        enabled: false        # API Docs(JSON) 노출 여부 (기본 true, 운영 배포 시 false로 막기도 함)
+    swagger-ui:
+        enabled: false        # Swagger UI 노출 여부
+        operations-sorter: alpha   # API 정렬 (alpha: 알파벳순, method: HTTP 메서드순)
+        tags-sorter: alpha
+        doc-expansion: list   # UI에서 API 펼침 여부 (none, list, full)
+    writer-with-default-pretty-printer: true   # JSON 스펙 출력 시 보기 좋게
+    use-return-type-schema: true
+
+
+jwt:
+    secret: SuperStrongSecretKeyForJWT
+    expiration: 36000000
+
+hellofit:
+    security:
+        pepper: ${password_pepper}
+#        pepper: ${hellofit-prod-db.password_pepper}
+
+logging:
+    level:
+        root: INFO          # 기본은 INFO
+        org.springframework.web: WARN
+        org.hibernate.SQL: WARN

@@ -14,13 +14,16 @@ import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
-    public enum Role { USER, ADMIN }
+    public enum Role {USER, ADMIN}
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+//    @Value("${jwt.secret}")
+//    private String secretKey;
+//
+//    @Value("${jwt.expiration}")
+//    private long validityInMilliseconds;
 
-    @Value("${jwt.expiration}")
-    private long validityInMilliseconds;
+    private final String secretKey = "SuperStrongSecretKeyForJWT"; // 직접 하드코딩
+    private final long validityInMilliseconds = 36000000L;
 
     private Key key;
 
@@ -29,19 +32,20 @@ public class JwtTokenProvider {
 
     @PostConstruct
     protected void init() {
-        byte[] keyBytes = Base64.getEncoder().encode(secretKey.getBytes());
+        byte[] keyBytes = Base64.getEncoder()
+            .encode(secretKey.getBytes());
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
     // 토큰 생성
-    private String createToken(UUID userId, Role role, Long expireTime){
+    private String createToken(UUID userId, Role role, Long expireTime) {
         return Jwts.builder()
-                .setSubject(userId.toString())
-                .claim("role", role.name())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expireTime))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+            .setSubject(userId.toString())
+            .claim("role", role.name())
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + expireTime))
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
     }
 
     /**
@@ -51,7 +55,7 @@ public class JwtTokenProvider {
      * @return token 값
      */
     public String generateAccessToken(UUID userId, Role role) {
-        if(role == null){
+        if (role == null) {
             role = Role.USER;
         }
 
@@ -65,7 +69,7 @@ public class JwtTokenProvider {
      * @return token 값
      */
     public String generateRefreshToken(UUID userId, Role role) {
-        if(role == null){
+        if (role == null) {
             role = Role.USER;
         }
 
@@ -77,8 +81,8 @@ public class JwtTokenProvider {
      */
     public UUID getUserIdFromToken(String token) {
         return UUID.fromString(
-                this.parseClaims(token)
-                        .getSubject()
+            this.parseClaims(token)
+                .getSubject()
         );
     }
 
@@ -93,20 +97,24 @@ public class JwtTokenProvider {
 
     /**
      * 토큰에서 claim 부분 반환
+     *
      * @return 토큰 claim dict 값
      */
     private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+            .setSigningKey(key)
+            .build()
+            .parseClaimsJws(token)
+            .getBody();
     }
 
 
     public TokenStatus validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
             return TokenStatus.VALID;
         } catch (ExpiredJwtException e) {
             return TokenStatus.EXPIRED;
