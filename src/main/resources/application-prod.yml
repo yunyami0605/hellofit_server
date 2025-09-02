@@ -1,15 +1,7 @@
 spring:
     config:
-        import: aws-secretsmanager:hellofit/prod/db
-
         activate:
             on-profile: prod
-
-    datasource:
-        url: jdbc:mariadb://13.125.181.109:3306/hellofit_db
-        username: hellofit_user
-        password: Fit@App-P6r9o5d4%23!
-        driver-class-name: org.mariadb.jdbc.Driver
 
     cloud:
         aws:
@@ -21,24 +13,10 @@ spring:
             credentials:
                 access-key: ${AWS_ACCESS_KEY} # sdk에서 자동으로 가져옴
                 secret-key: ${AWS_SECRET_KEY}
-            secretsmanager:
-                enabled: true
-
-            #        datasource:
-            #            url: jdbc:${hellofit-prod-db.engine}://${hellofit-prod-db.host}:${hellofit-prod-db.port}/${hellofit-prod-db.dbname}
-            #            username: ${hellofit-prod-db.username}
-        #            password: ${hellofit-prod-db.password}
-        #            driver-class-name: org.mariadb.jdbc.Driver
-
-    #    datasource:
-    #        url: jdbc:${engine}://${host}:${port}/${dbname}
-    #        username: ${username}
-    #        password: ${password}
-    #        driver-class-name: org.mariadb.jdbc.Driver
 
     jpa:
         hibernate:
-            ddl-auto: validate
+            ddl-auto: update
 
         show-sql: true
         properties:

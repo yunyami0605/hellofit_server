@@ -1,0 +1,46 @@
+spring:
+    application:
+        name: hellofit_server
+
+    cloud:
+        aws:
+            region:
+                static: ap-northeast-2
+            s3:
+                enabled: true
+                bucket: hellofit-bucket
+            credentials:
+                access-key: ${AWS_ACCESS_KEY} # sdk에서 자동으로 가져옴
+                secret-key: ${AWS_SECRET_KEY}
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+        database-platform: org.hibernate.dialect.MariaDBDialect
+
+    mvc:
+        throw-exception-if-no-handler-found: true
+    web:
+        resources:
+            add-mappings: false
+
+server:
+    port: 8084
+    servlet:
+        context-path: /api
+
+# CORS는 환경별 yml에서 채우고, 여기서는 키만 둔다(빈 값이면 나중에 채워짐).
+cors:
+    allowed-origins:
+        - https://ai-hellofit-frontend.vercel.app
+    allowed-methods: [ GET, POST, PUT, PATCH, DELETE, OPTIONS ]
+    allowed-headers: [ "*" ]
+    exposed-headers: [ Authorization, Location ]
+    allow-credentials: true
+    max-age: 3600
+
