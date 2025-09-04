@@ -93,7 +93,7 @@ public class PostController {
     @Operation(summary = "게시글 하나 조회 API")
     @GetMapping("/{id}")
     public ResponseEntity<PostResponseDto.Summary> getPostOne(@PathVariable UUID id) {
-        return ResponseEntity.ok(postService.getPost(id));
+        return ResponseEntity.ok(postService.getPostOne(id));
     }
 
     @Operation(summary = "게시글 수정 데이터 조회 API")

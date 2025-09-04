@@ -5,6 +5,8 @@ import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.exception.CommonException;
 import com.hellofit.hellofit_server.image.ImageEntity;
 import com.hellofit.hellofit_server.image.dto.ImageResponseDto;
+import com.hellofit.hellofit_server.like.LikeRepository;
+import com.hellofit.hellofit_server.like.LikeTargetType;
 import com.hellofit.hellofit_server.post.dto.PostRequestDto;
 import com.hellofit.hellofit_server.post.dto.PostResponseDto;
 import com.hellofit.hellofit_server.post.exception.PostException;
@@ -28,6 +30,7 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class PostService {
 
+    private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final AwsService awsService;
 
@@ -51,8 +54,8 @@ public class PostService {
     }
 
     // 게시글 목록 조회
+    @Transactional(readOnly = true)
     public List<PostResponseDto.SummaryList> getPosts() {
-
         return postRepository.findAll()
             .stream()
             .map((_posts) -> {
@@ -64,7 +67,11 @@ public class PostService {
                         )
                         .toList();
 
-                    return PostResponseDto.SummaryList.from(_posts, presignedImages);
+                    int likeCount = likeRepository.countByTargetTypeAndTargetId(
+                        LikeTargetType.POST, _posts.getId()
+                    );
+
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount);
                 }
             )
             .toList();
@@ -73,21 +80,23 @@ public class PostService {
     /**
      * 게시글 조회
      */
-    public PostResponseDto.Summary getPost(UUID id) {
-        return postRepository.findById(id)
-            .map((_post) -> {
-
-                List<String> presignedImages = _post.getPostImages()
-                    .stream()
-                    .map((_image) ->
-                        awsService.presignedGetUrl(_image.getImage()
-                            .getObjectKey())
-                    )
-                    .toList();
-
-                return PostResponseDto.Summary.from(_post, presignedImages);
-            })
+    @Transactional
+    public PostResponseDto.Summary getPostOne(UUID id) {
+        PostEntity postEntity = postRepository.findById(id)
             .orElseThrow(() -> new PostException.NotFound("PostSevice -> getPost", id.toString()));
+
+        postEntity.increaseViewCount();
+
+        List<String> presignedGetKey = postEntity.getPostImages()
+            .stream()
+            .map((_image) ->
+                awsService.presignedGetUrl(_image.getImage()
+                    .getObjectKey())
+            )
+            .toList();
+
+
+        return PostResponseDto.Summary.from(postEntity, presignedGetKey);
     }
 
     /**

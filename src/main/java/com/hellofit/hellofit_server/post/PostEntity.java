@@ -36,6 +36,9 @@ public class PostEntity {
     @Column(nullable = false)
     private String content;
 
+    @Column(nullable = false)
+    private Integer viewCount;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -46,6 +49,11 @@ public class PostEntity {
     @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImageEntity> postImages = new ArrayList<>();
+
+    // 조회수 증가
+    public void increaseViewCount() {
+        this.viewCount++;
+    }
 
     public void addImage(ImageEntity _image, int sortOrder) {
         PostImageEntity mapping = PostImageEntity.builder()
