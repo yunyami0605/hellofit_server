@@ -1,6 +1,7 @@
 package com.hellofit.hellofit_server.post;
 
 import com.hellofit.hellofit_server.aws.AwsService;
+import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.exception.CommonException;
 import com.hellofit.hellofit_server.image.ImageEntity;
@@ -13,9 +14,12 @@ import com.hellofit.hellofit_server.post.exception.PostException;
 import com.hellofit.hellofit_server.post.image.PostImageEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,15 +39,42 @@ public class PostService {
     private final AwsService awsService;
 
     // 유저 본인 게시글 목록 조회
-    public List<PostResponseDto.Summary> getPostsByUser(UserEntity user) {
-        return postRepository.findByUserId(user.getId())
+
+    /**
+     * 유저 본인 게시글 목록 조회
+     *
+     * @param user     user id
+     * @param cursorId createdAt 기준 cursor 방식
+     * @param size     조회 사이즈
+     */
+    public CursorResponse<PostResponseDto.Summary> getPostsByUser(UserEntity user, LocalDateTime cursorId, int size) {
+        // 1. 11개 페이지 요청
+        Pageable pageable = PageRequest.of(0, size + 1);
+
+        // 2. cursorId로 11개 페이지 조회
+        List<PostEntity> posts = this.postRepository.findByUserIdWithCursor(user.getId(), cursorId, pageable);
+
+        // 3. db로 조회한 posts 갯수가 11개이면 hasNext = true -> 기존 요청 size로 array 분리
+        boolean hasNext = posts.size() > size;
+        List<PostEntity> content = hasNext ? posts.subList(0, size) : posts;
+
+        // 4. 각 게시글에 대한 presigned url 추가
+        List<PostResponseDto.Summary> items = content
             .stream()
             .map((_posts) -> {
                     List<String> presignedImages = _posts.getPostImages()
                         .stream()
-                        .map((_image) ->
-                            awsService.presignedGetUrl(_image.getImage()
-                                .getObjectKey())
+                        .map((_image) -> {
+                                String key = _image.getImage()
+                                    .getObjectKey();
+
+                                if (key == null || key.trim()
+                                    .isEmpty()) {
+                                    return null;
+                                }
+                                return awsService.presignedGetUrl(_image.getImage()
+                                    .getObjectKey());
+                            }
                         )
                         .toList();
 
@@ -51,19 +82,53 @@ public class PostService {
                 }
             )
             .toList();
+
+        // 5. items가 빈 배열이면 nextCursor = null, 아니면 마지막 cursorId 설정
+        String nextCursor = items.isEmpty()
+            ? null
+            : items.get(items.size() - 1)
+            .getCreatedAt()
+            .toString();
+
+        // 6. cursor 응답 형성 후 반환
+        return CursorResponse.<PostResponseDto.Summary>builder()
+            .items(items)
+            .nextCursor(nextCursor)
+            .hasNext(hasNext)
+            .build();
     }
 
     // 게시글 목록 조회
     @Transactional(readOnly = true)
-    public List<PostResponseDto.SummaryList> getPosts() {
-        return postRepository.findAll()
+    public CursorResponse<PostResponseDto.SummaryList> getPosts(LocalDateTime cursorId, int size) {
+        // 1. 11개 페이지 요청
+        Pageable pageable = PageRequest.of(0, size + 1);
+
+        // 2. cursorId로 11개 페이지 조회
+        List<PostEntity> posts = postRepository.findPostsByCursor(cursorId, pageable);
+
+        // 3. 다음 게시글 있는지 체크
+        boolean hasNext = posts.size() > size;
+        List<PostEntity> contents = hasNext ? posts.subList(0, size) : posts;
+
+        // 4. 게시글 마다 signedurl 추가
+        List<PostResponseDto.SummaryList> items = contents
             .stream()
             .map((_posts) -> {
                     List<String> presignedImages = _posts.getPostImages()
                         .stream()
-                        .map((_image) ->
-                            awsService.presignedGetUrl(_image.getImage()
-                                .getObjectKey())
+                        .map((_image) -> {
+                                String key = _image.getImage()
+                                    .getObjectKey();
+
+                                if (key == null || key.trim()
+                                    .isEmpty()) {
+                                    return null;
+                                }
+
+                                return awsService.presignedGetUrl(_image.getImage()
+                                    .getObjectKey());
+                            }
                         )
                         .toList();
 
@@ -75,6 +140,19 @@ public class PostService {
                 }
             )
             .toList();
+
+        // 5. nextCursor 추가
+        String nextCursor = items.isEmpty()
+            ? null
+            : items.get(items.size() - 1)
+            .getCreatedAt()
+            .toString();
+
+        return CursorResponse.<PostResponseDto.SummaryList>builder()
+            .nextCursor(nextCursor)
+            .hasNext(hasNext)
+            .items(items)
+            .build();
     }
 
     /**

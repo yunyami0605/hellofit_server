@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.post;
 
+import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.post.dto.PostRequestDto;
 import com.hellofit.hellofit_server.post.dto.PostResponseDto;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,19 +65,26 @@ public class PostController {
         description = "유저가 작성한 게시글 목록 조회 성공"
     )
     @GetMapping
-    public ResponseEntity<List<PostResponseDto.Summary>> getPostsByUser(@AuthenticationPrincipal UserEntity user) {
-        List<PostResponseDto.Summary> posts = postService.getPostsByUser(user);
+    public ResponseEntity<CursorResponse<PostResponseDto.Summary>> getPostsByUser(
+        @AuthenticationPrincipal UserEntity user,
+        @RequestParam(required = false) LocalDateTime cursorId,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        CursorResponse<PostResponseDto.Summary> posts = postService.getPostsByUser(user, cursorId, size);
         return ResponseEntity.ok(posts);
     }
 
     @Operation(summary = "게시글 목록 조회 API")
     @ApiResponse(
         responseCode = "200",
-        description = "게시글 조회 성공"
+        description = "게시글 목록 조회 성공"
     )
     @GetMapping("/")
-    public ResponseEntity<List<PostResponseDto.SummaryList>> getPosts() {
-        List<PostResponseDto.SummaryList> posts = postService.getPosts();
+    public ResponseEntity<CursorResponse<PostResponseDto.SummaryList>> getPosts(
+        @RequestParam(required = false) LocalDateTime cursorId,
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        CursorResponse<PostResponseDto.SummaryList> posts = postService.getPosts(cursorId, size);
         return ResponseEntity.ok(posts);
     }
 

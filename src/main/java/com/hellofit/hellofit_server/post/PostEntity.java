@@ -36,7 +36,7 @@ public class PostEntity {
     @Column(nullable = false)
     private String content;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "int default 0")
     private Integer viewCount;
 
     private LocalDateTime createdAt;
@@ -68,6 +68,11 @@ public class PostEntity {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+
+        // 조회수 0으로 초기화
+        if (viewCount == null) {
+            viewCount = 0;
+        }
     }
 
     @PreUpdate

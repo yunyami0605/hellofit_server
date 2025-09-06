@@ -1,15 +1,12 @@
 package com.hellofit.hellofit_server.post.dto;
 
-import com.hellofit.hellofit_server.image.ImageEntity;
 import com.hellofit.hellofit_server.image.dto.ImageResponseDto;
 import com.hellofit.hellofit_server.post.PostEntity;
-import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
