@@ -47,7 +47,7 @@ public class PostService {
      * @param cursorId createdAt 기준 cursor 방식
      * @param size     조회 사이즈
      */
-    public CursorResponse<PostResponseDto.Summary> getPostsByUser(UserEntity user, LocalDateTime cursorId, int size) {
+    public CursorResponse<PostResponseDto.SummaryList> getPostsByUser(UserEntity user, LocalDateTime cursorId, int size) {
         // 1. 11개 페이지 요청
         Pageable pageable = PageRequest.of(0, size + 1);
 
@@ -59,7 +59,7 @@ public class PostService {
         List<PostEntity> content = hasNext ? posts.subList(0, size) : posts;
 
         // 4. 각 게시글에 대한 presigned url 추가
-        List<PostResponseDto.Summary> items = content
+        List<PostResponseDto.SummaryList> items = content
             .stream()
             .map((_posts) -> {
                     List<String> presignedImages = _posts.getPostImages()
@@ -78,7 +78,11 @@ public class PostService {
                         )
                         .toList();
 
-                    return PostResponseDto.Summary.from(_posts, presignedImages);
+                    int likeCount = likeRepository.countByTargetTypeAndTargetId(
+                        LikeTargetType.POST, _posts.getId()
+                    );
+
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount);
                 }
             )
             .toList();
@@ -91,7 +95,7 @@ public class PostService {
             .toString();
 
         // 6. cursor 응답 형성 후 반환
-        return CursorResponse.<PostResponseDto.Summary>builder()
+        return CursorResponse.<PostResponseDto.SummaryList>builder()
             .items(items)
             .nextCursor(nextCursor)
             .hasNext(hasNext)

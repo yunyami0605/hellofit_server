@@ -65,12 +65,12 @@ public class PostController {
         description = "유저가 작성한 게시글 목록 조회 성공"
     )
     @GetMapping
-    public ResponseEntity<CursorResponse<PostResponseDto.Summary>> getPostsByUser(
+    public ResponseEntity<CursorResponse<PostResponseDto.SummaryList>> getPostsByUser(
         @AuthenticationPrincipal UserEntity user,
         @RequestParam(required = false) LocalDateTime cursorId,
         @RequestParam(defaultValue = "10") int size
     ) {
-        CursorResponse<PostResponseDto.Summary> posts = postService.getPostsByUser(user, cursorId, size);
+        CursorResponse<PostResponseDto.SummaryList> posts = postService.getPostsByUser(user, cursorId, size);
         return ResponseEntity.ok(posts);
     }
 
