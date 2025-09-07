@@ -47,7 +47,7 @@ public enum ErrorCode {
     // ===== Auth 관련 =====
     @Schema(description = ErrorMessage.UNAUTHORIZED)
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED),
-    
+
     // 가입되지 않은 이메일로 접근 시
     @Schema(description = ErrorMessage.UNAUTHORIZED_EMAIL)
     UNAUTHORIZED_EMAIL(HttpStatus.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED_EMAIL),
@@ -68,7 +68,11 @@ public enum ErrorCode {
 
     // 게시글을 찾을 수 없는 경우
     @Schema(description = ErrorMessage.POST_NOT_FOUND)
-    POST_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.POST_NOT_FOUND);
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.POST_NOT_FOUND),
+
+    // 댓글을 찾을 수 없는 경우
+    @Schema(description = ErrorMessage.COMMENT_NOT_FOUND)
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.COMMENT_NOT_FOUND);
 
     private final HttpStatus status;
     private final String message;

@@ -25,4 +25,7 @@ public class ErrorMessage {
 
     // ===== Post 관련 =====
     public static final String POST_NOT_FOUND = "게시글을 찾을 수 없습니다.";
+
+    // ===== Comment 관련 =====
+    public static final String COMMENT_NOT_FOUND = "댓글을 찾을 수 없습니다.";
 }
