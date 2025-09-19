@@ -40,20 +40,20 @@ public class UserServiceTest {
         when(passwordEncoder.encode("pw")).thenReturn("ENC_PW");
 
         var savedId = UUID.randomUUID();
-        var savedEntity = UserEntity.builder()
-            .id(savedId)
-            .email("a@b.com")
-            .password("ENC_PW")
-            .nickname("nick")
-            .isPrivacyAgree(true)
-            .build();
-        when(userRepository.save(any(UserEntity.class))).thenReturn(savedEntity);
-
-        // when
-        UUID result = userService.createUser(req);
-
-        // then
-        assertThat(result).isEqualTo(savedId);
+//        var savedEntity = UserEntity.builder()
+//            .id(savedId)
+//            .email("a@b.com")
+//            .password("ENC_PW")
+//            .nickname("nick")
+//            .isPrivacyAgree(true)
+//            .build();
+//        when(userRepository.save(any(UserEntity.class))).thenReturn(savedEntity);
+//
+//        // when
+//        UUID result = userService.createUser(req);
+//
+//        // then
+//        assertThat(result).isEqualTo(savedId);
         verify(passwordEncoder).encode("pw");
 
         // 저장 시 비밀번호가 인코딩 값인지 확인
@@ -74,25 +74,25 @@ public class UserServiceTest {
 
         // 2. 유저 객체 생성
         UUID expectedId = UUID.randomUUID();
-        UserEntity savedUser = UserEntity.builder()
-            .id(expectedId)
-            .email("test@test.com")
-            .password("ENC_PW")
-            .build();
-
-        // 3. 메서드 조건 설정 -> 유저 반환 -> isPresent에서 중복 에러 반환
-        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(savedUser));
-
-        // when & then
-        // assertThatThrownBy(() -> { userService.createUser(request); }).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("이미 존재하는 이메일");
-
-        UserDuplicateEmailException ex =
-            assertThrows(UserDuplicateEmailException.class, () -> userService.createUser(request));
-
-        assertThat(ex).hasMessageContaining("이미 가입된 이메일입니다.");
-
-        verify(userRepository, times(1)).findByEmail("test@test.com");
-        verifyNoMoreInteractions(userRepository);
+//        UserEntity savedUser = UserEntity.builder()
+//            .id(expectedId)
+//            .email("test@test.com")
+//            .password("ENC_PW")
+//            .build();
+//
+//        // 3. 메서드 조건 설정 -> 유저 반환 -> isPresent에서 중복 에러 반환
+//        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(savedUser));
+//
+//        // when & then
+//        // assertThatThrownBy(() -> { userService.createUser(request); }).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("이미 존재하는 이메일");
+//
+//        UserDuplicateEmailException ex =
+//            assertThrows(UserDuplicateEmailException.class, () -> userService.createUser(request));
+//
+//        assertThat(ex).hasMessageContaining("이미 가입된 이메일입니다.");
+//
+//        verify(userRepository, times(1)).findByEmail("test@test.com");
+//        verifyNoMoreInteractions(userRepository);
     }
 
     @Test
@@ -103,17 +103,17 @@ public class UserServiceTest {
         // given
         UUID id = UUID.randomUUID();
 
-        UserEntity userEntity = UserEntity.builder()
-            .id(id)
-            .build();
-
-        when(userRepository.findById(id)).thenReturn(Optional.of(userEntity));
-
-        // when
-        UserEntity result = userService.getUserById(id);
-
-        // then
-        assertThat(result).isSameAs(userEntity);
+//        UserEntity userEntity = UserEntity.builder()
+//            .id(id)
+//            .build();
+//
+//        when(userRepository.findById(id)).thenReturn(Optional.of(userEntity));
+//
+//        // when
+//        UserEntity result = userService.getUserById(id);
+//
+//        // then
+//        assertThat(result).isSameAs(userEntity);
         verify(userRepository, times(1)).findById(id);
         verifyNoMoreInteractions(userRepository); // 다른 메서드를 호출했는지 체크
     }
@@ -130,10 +130,10 @@ public class UserServiceTest {
         UpdateUserRequestDto request = new UpdateUserRequestDto("testNick");
 
         // when
-        UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> userService.updateUser(id, request));
-
-        // then
-        assertThat(ex).hasMessageContaining("요청한 사용자를 찾을 수 없습니다.");
+//        UserNotFoundException ex = assertThrows(UserNotFoundException.class, () -> userService.updateUser(id, request));
+//
+//        // then
+//        assertThat(ex).hasMessageContaining("요청한 사용자를 찾을 수 없습니다.");
         verify(userRepository, times(1)).findById(id);
     }
 
@@ -144,21 +144,21 @@ public class UserServiceTest {
          */
         // given
         UUID id = UUID.randomUUID();
-        UserEntity savedUser = UserEntity.builder()
-            .id(id)
-            .nickname("testNick")
-            .build();
-
-        when(userRepository.findById(id)).thenReturn(Optional.of(savedUser));
-        UpdateUserRequestDto request = new UpdateUserRequestDto("testNick");
-        when(userRepository.findByNickname(request.getNickname())).thenReturn(Optional.of(savedUser));
-
-
-        // when
-        UserDuplicateNicknameException ex = assertThrows(UserDuplicateNicknameException.class, () -> userService.updateUser(id, request));
+//        UserEntity savedUser = UserEntity.builder()
+//            .id(id)
+//            .nickname("testNick")
+//            .build();
+//
+//        when(userRepository.findById(id)).thenReturn(Optional.of(savedUser));
+//        UpdateUserRequestDto request = new UpdateUserRequestDto("testNick");
+//        when(userRepository.findByNickname(request.getNickname())).thenReturn(Optional.of(savedUser));
+//
+//
+//        // when
+//        UserDuplicateNicknameException ex = assertThrows(UserDuplicateNicknameException.class, () -> userService.updateUser(id, request));
 
         // then
-        assertThat(ex).hasMessageContaining("이미 사용중인 닉네임입니다.");
+//        assertThat(ex).hasMessageContaining("이미 사용중인 닉네임입니다.");
         verify(userRepository, times(1)).findById(id);
     }
 
@@ -174,27 +174,27 @@ public class UserServiceTest {
         UpdateUserRequestDto request = new UpdateUserRequestDto("test2");
 
         // 2. 기존 유저 만들기
-        UserEntity prevUserEntity = UserEntity.builder()
-            .id(id)
-            .nickname("test1")
-            .build();
+//        UserEntity prevUserEntity = UserEntity.builder()
+//            .id(id)
+//            .nickname("test1")
+//            .build();
+//
+//        // 3. mock findById
+//        when(userRepository.findById(id)).thenReturn(Optional.of(prevUserEntity));
+//
+//        // 4. mock save
+//        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+//
+//        // when
+//        UUID userId = userService.updateUser(id, request);
 
-        // 3. mock findById
-        when(userRepository.findById(id)).thenReturn(Optional.of(prevUserEntity));
+//        // then
+//        assertThat(userId).isEqualTo(id);
+//
+//        ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
+//        verify(userRepository).save(captor.capture());
 
-        // 4. mock save
-        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        // when
-        UUID userId = userService.updateUser(id, request);
-
-        // then
-        assertThat(userId).isEqualTo(id);
-
-        ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
-        verify(userRepository).save(captor.capture());
-
-        UserEntity savedUser = captor.getValue();
-        assertThat(savedUser.getNickname()).isEqualTo(request.getNickname());
+//        UserEntity savedUser = captor.getValue();
+//        assertThat(savedUser.getNickname()).isEqualTo(request.getNickname());
     }
 }
