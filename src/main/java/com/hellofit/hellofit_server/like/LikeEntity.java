@@ -5,7 +5,6 @@ import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity

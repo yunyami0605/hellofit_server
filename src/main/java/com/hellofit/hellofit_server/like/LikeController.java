@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,22 +27,21 @@ public class LikeController {
         responseCode = "200",
         description = "좋아요 on/off success"
     )
-    @PostMapping("/toggle/{targetId}")
-    public ResponseEntity<Boolean> togglePostLike(
+    @PostMapping("/toggle/{targetType}/{targetId}")
+    public Boolean togglePostLike(
         @AuthenticationPrincipal UserEntity user,
+        @PathVariable LikeTargetType targetType,
         @PathVariable UUID targetId
     ) {
-        boolean liked = likeService.togglePostLike(user.getId(), targetId);
-        return ResponseEntity.ok(liked);
+        return likeService.togglePostLike(user.getId(), targetType, targetId);
     }
 
-    /**
-     * 좋아요 개수 조회
-     */
-    @GetMapping("/count")
-    public ResponseEntity<Integer> getLikeCount(@PathVariable UUID postId, @RequestParam LikeTargetType targetType) {
-        int count = likeService.getLikeCount(postId, targetType);
-        return ResponseEntity.ok(count);
+    @GetMapping("/{targetType}/{targetId}/count")
+    public Integer getLikeCount(
+        @PathVariable LikeTargetType targetType,
+        @PathVariable UUID targetId
+    ) {
+        return likeService.getLikeCount(targetId, targetType);
     }
 }
 
