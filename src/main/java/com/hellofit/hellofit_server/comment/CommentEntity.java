@@ -4,6 +4,7 @@ import com.hellofit.hellofit_server.global.entity.SoftDeletableEntity;
 import com.hellofit.hellofit_server.post.PostEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -18,11 +19,13 @@ import java.util.List;
 public class CommentEntity extends SoftDeletableEntity {
 
     @Setter
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id", nullable = false)
     private PostEntity post;
 
     @Setter
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -35,6 +38,7 @@ public class CommentEntity extends SoftDeletableEntity {
     @OrderBy("createdAt ASC")
     private List<CommentEntity> recomments = new ArrayList<>(); // 답글
 
+    @NotBlank
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
@@ -46,11 +50,21 @@ public class CommentEntity extends SoftDeletableEntity {
         comment.content = content;
         comment.parent = parent;
 
+        // 연관관계 편의 메서드 호출
+        post.addComment(comment);
+        if (parent != null) {
+            parent.addRecomment(comment);
+        }
+
         return comment;
     }
 
     // content 변경
     public void changeContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("content");
+        }
+
         this.content = content;
     }
 
