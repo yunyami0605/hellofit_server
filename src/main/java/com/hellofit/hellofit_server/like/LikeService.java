@@ -2,7 +2,6 @@ package com.hellofit.hellofit_server.like;
 
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
-import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

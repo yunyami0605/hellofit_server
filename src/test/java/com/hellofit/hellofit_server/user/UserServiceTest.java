@@ -2,9 +2,6 @@ package com.hellofit.hellofit_server.user;
 
 import com.hellofit.hellofit_server.user.dto.CreateUserRequestDto;
 import com.hellofit.hellofit_server.user.dto.UpdateUserRequestDto;
-import com.hellofit.hellofit_server.user.exception.UserDuplicateEmailException;
-import com.hellofit.hellofit_server.user.exception.UserDuplicateNicknameException;
-import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -24,13 +21,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
-    @Mock UserRepository userRepository;
-    @Mock PasswordEncoder passwordEncoder;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    PasswordEncoder passwordEncoder;
 
-    @InjectMocks UserService userService;
+    @InjectMocks
+    UserService userService;
 
     @Test
-    void createUserThenSuccess(){
+    void createUserThenSuccess() {
         /*
           createUser 메서드 -> 유저가 정상적으로 생성되는지 테스트
          */
@@ -41,8 +41,12 @@ public class UserServiceTest {
 
         var savedId = UUID.randomUUID();
         var savedEntity = UserEntity.builder()
-                .id(savedId).email("a@b.com").password("ENC_PW").nickname("nick").isPrivacyAgree(true)
-                .build();
+            .id(savedId)
+            .email("a@b.com")
+            .password("ENC_PW")
+            .nickname("nick")
+            .isPrivacyAgree(true)
+            .build();
         when(userRepository.save(any(UserEntity.class))).thenReturn(savedEntity);
 
         // when
@@ -55,21 +59,26 @@ public class UserServiceTest {
         // 저장 시 비밀번호가 인코딩 값인지 확인
         ArgumentCaptor<UserEntity> captor = ArgumentCaptor.forClass(UserEntity.class);
         verify(userRepository).save(captor.capture());
-        assertThat(captor.getValue().getPassword()).isEqualTo("ENC_PW");
+        assertThat(captor.getValue()
+            .getPassword()).isEqualTo("ENC_PW");
     }
 
     @Test
-    void createUserWhenEmailExistThenFail(){
+    void createUserWhenEmailExistThenFail() {
         /*
-        * createUser -> 이미 존재하는 이메일로 유저를 만들었을 경우, 에러 반환 되는지 여부
-        */
+         * createUser -> 이미 존재하는 이메일로 유저를 만들었을 경우, 에러 반환 되는지 여부
+         */
         // given
         // 1. 요청 생성
-        CreateUserRequestDto request = new CreateUserRequestDto( "test@test.com", "pw", "nick", true);
+        CreateUserRequestDto request = new CreateUserRequestDto("test@test.com", "pw", "nick", true);
 
         // 2. 유저 객체 생성
         UUID expectedId = UUID.randomUUID();
-        UserEntity savedUser = UserEntity.builder().id(expectedId).email("test@test.com").password("ENC_PW").build();
+        UserEntity savedUser = UserEntity.builder()
+            .id(expectedId)
+            .email("test@test.com")
+            .password("ENC_PW")
+            .build();
 
         // 3. 메서드 조건 설정 -> 유저 반환 -> isPresent에서 중복 에러 반환
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(savedUser));
@@ -78,7 +87,7 @@ public class UserServiceTest {
         // assertThatThrownBy(() -> { userService.createUser(request); }).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("이미 존재하는 이메일");
 
         UserDuplicateEmailException ex =
-                assertThrows(UserDuplicateEmailException.class, () -> userService.createUser(request));
+            assertThrows(UserDuplicateEmailException.class, () -> userService.createUser(request));
 
         assertThat(ex).hasMessageContaining("이미 가입된 이메일입니다.");
 
@@ -87,14 +96,16 @@ public class UserServiceTest {
     }
 
     @Test
-    void getUserByIdThenSuccess(){
+    void getUserByIdThenSuccess() {
         /*
          * getUserById -> user id 넣었을 때, 정상적으로 유저 객체가 반환되는지
          */
         // given
         UUID id = UUID.randomUUID();
 
-        UserEntity userEntity = UserEntity.builder().id(id).build();
+        UserEntity userEntity = UserEntity.builder()
+            .id(id)
+            .build();
 
         when(userRepository.findById(id)).thenReturn(Optional.of(userEntity));
 
@@ -108,10 +119,10 @@ public class UserServiceTest {
     }
 
     @Test
-    void updateUserWhenUserNotFoundThenFail(){
+    void updateUserWhenUserNotFoundThenFail() {
         /*
-        * updateUser -> 존재하지않는 id로 접근시 -> Not Found User 에러 반환 확인
-        */
+         * updateUser -> 존재하지않는 id로 접근시 -> Not Found User 에러 반환 확인
+         */
         // given
         UUID id = UUID.randomUUID();
 
@@ -127,13 +138,16 @@ public class UserServiceTest {
     }
 
     @Test
-    void updateUserWhenUserDuplicateNicknameThenFail(){
+    void updateUserWhenUserDuplicateNicknameThenFail() {
         /*
          * updateUser -> 중복 닉네임 수정 요청 -> "이미 사용중인 닉네임입니다." 에러 문구 반환 확인
          */
         // given
         UUID id = UUID.randomUUID();
-        UserEntity savedUser = UserEntity.builder().id(id).nickname("testNick").build();
+        UserEntity savedUser = UserEntity.builder()
+            .id(id)
+            .nickname("testNick")
+            .build();
 
         when(userRepository.findById(id)).thenReturn(Optional.of(savedUser));
         UpdateUserRequestDto request = new UpdateUserRequestDto("testNick");
@@ -149,10 +163,10 @@ public class UserServiceTest {
     }
 
     @Test
-    void updateUserThenSuccess(){
+    void updateUserThenSuccess() {
         /*
-        *  updateUser -> nickname, password 부분에서 유저 정보가 정상적으로 변경되었는지 테스트
-        */
+         *  updateUser -> nickname, password 부분에서 유저 정보가 정상적으로 변경되었는지 테스트
+         */
 
         // given
         // 1. updateUser 파라미터 만들기
@@ -160,7 +174,10 @@ public class UserServiceTest {
         UpdateUserRequestDto request = new UpdateUserRequestDto("test2");
 
         // 2. 기존 유저 만들기
-        UserEntity prevUserEntity = UserEntity.builder().id(id).nickname("test1").build();
+        UserEntity prevUserEntity = UserEntity.builder()
+            .id(id)
+            .nickname("test1")
+            .build();
 
         // 3. mock findById
         when(userRepository.findById(id)).thenReturn(Optional.of(prevUserEntity));

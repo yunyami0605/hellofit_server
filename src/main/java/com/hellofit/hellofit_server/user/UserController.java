@@ -32,81 +32,79 @@ public class UserController {
     private final UserService userService;
 
     @Operation(
-            summary = "유저 생성 API"
+        summary = "유저 생성 API"
     )
     @ApiResponse(
-            responseCode = "201",
-            description = "유저 생성 성공",
-            content = @Content(schema = @Schema(implementation = MutationResponse.class))
+        responseCode = "201",
+        description = "유저 생성 성공",
+        content = @Content(schema = @Schema(implementation = MutationResponse.class))
     )
     @ApiResponse(responseCode = "409", description = ErrorMessage.DUPLICATE_EMAIL, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MutationResponse createUser(@RequestBody @Valid CreateUserRequestDto request) {
-        return new MutationResponse(userService.createUser(request));
+        return userService.createUser(request);
     }
 
     @Operation(
-            summary = "유저 조회 API"
+        summary = "유저 조회 API"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "유저 조회 성공",
-                    content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))),
-            @ApiResponse(responseCode = "404", description = ErrorMessage.USER_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+        @ApiResponse(responseCode = "200", description = "유저 조회 성공",
+            content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))),
+        @ApiResponse(responseCode = "404", description = ErrorMessage.USER_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public UserMappingResponseDto.Summary getUserById(@PathVariable UUID id){
-        return UserMappingResponseDto.Summary.fromEntity(userService.getUserById(id));
+    public UserMappingResponseDto.Summary getUserById(@PathVariable UUID id) {
+        return UserMappingResponseDto.Summary.fromEntity(userService.getUserById(id, "getUserById"));
     }
 
     @Operation(
-            summary = "유저 리스트 조회 API"
+        summary = "유저 리스트 조회 API"
     )
     @ApiResponse(responseCode = "200", description = "유저 리스트 조회 성공")
     @GetMapping("/list")
     @ResponseStatus(HttpStatus.OK)
     public PageResponse<UserMappingResponseDto.Detail> getUsersByPage(
-            @Parameter(description = "페이징 정보", example = "{ \"page\": 0, \"size\": 10 }")
-            Pageable pageable
-    ){
+        @Parameter(description = "페이징 정보", example = "{ \"page\": 0, \"size\": 10 }")
+        Pageable pageable
+    ) {
         return userService.getUsersByPage(pageable);
     }
 
     @Operation(
-            summary = "유저 수정 API"
-    )
-
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "유저 수정 성공",
-                    content = @Content(schema = @Schema(implementation = MutationResponse.class))
-            ),
-            @ApiResponse(responseCode = "404", description = ErrorMessage.USER_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
-    })
-    @PatchMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK) // 200 OK
-    public MutationResponse updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserRequestDto request){
-        return new MutationResponse(userService.updateUser(id, request));
-    }
-
-    @Operation(
-            summary = "유저 삭제 API"
+        summary = "유저 수정 API"
     )
     @ApiResponses({
         @ApiResponse(
-                responseCode = "200",
-                description = "유저 삭제 성공",
-                content = @Content(schema = @Schema(implementation = MutationResponse.class))
+            responseCode = "200",
+            description = "유저 수정 성공",
+            content = @Content(schema = @Schema(implementation = MutationResponse.class))
         ),
-            @ApiResponse(responseCode = "404", description = ErrorMessage.USER_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+        @ApiResponse(responseCode = "404", description = ErrorMessage.USER_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PatchMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK) // 200 OK
+    public MutationResponse updateUser(@PathVariable UUID id, @RequestBody @Valid UpdateUserRequestDto request) {
+        return userService.updateUser(id, request);
+    }
+
+    @Operation(
+        summary = "유저 삭제 API"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "유저 삭제 성공",
+            content = @Content(schema = @Schema(implementation = MutationResponse.class))
+        ),
+        @ApiResponse(responseCode = "404", description = ErrorMessage.USER_NOT_FOUND, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK) // 200 OK
-    public MutationResponse deleteUser(@PathVariable UUID id){
+    public MutationResponse deleteUser(@PathVariable UUID id) {
 
-        UUID deletedId = userService.deleteUser(id);
-        return new MutationResponse(deletedId);
+        return userService.deleteUser(id);
     }
 }

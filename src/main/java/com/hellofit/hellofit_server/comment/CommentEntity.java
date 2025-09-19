@@ -5,21 +5,24 @@ import com.hellofit.hellofit_server.post.PostEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "comments")
-@AllArgsConstructor
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")
 public class CommentEntity extends SoftDeletableEntity {
+
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id", nullable = false)
     private PostEntity post;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -35,14 +38,15 @@ public class CommentEntity extends SoftDeletableEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    // comment 객체 생성
     public static CommentEntity create(PostEntity post, UserEntity user, String content, CommentEntity parent) {
-        return CommentEntity.builder()
-            .post(post)
-            .user(user)
-            .content(content)
-            .parent(parent)
-            .build();
+
+        CommentEntity comment = new CommentEntity();
+        comment.post = post;
+        comment.user = user;
+        comment.content = content;
+        comment.parent = parent;
+
+        return comment;
     }
 
     // content 변경

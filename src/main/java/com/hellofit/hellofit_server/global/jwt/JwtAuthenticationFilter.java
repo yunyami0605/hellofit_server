@@ -3,13 +3,13 @@ package com.hellofit.hellofit_server.global.jwt;
 import com.hellofit.hellofit_server.auth.constants.TokenStatus;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
-import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,73 +25,62 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final AuthenticationEntryPoint authenticationEntryPoint; // ✅ 추가
+    private final AuthenticationEntryPoint authenticationEntryPoint;
     private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
                                     @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
 
         // 1. 요청에서 토큰 가져옴
         String token = resolveToken(request);
 
-        if (StringUtils.hasText(token)) {
-            try {
-                if (jwtTokenProvider.validateToken(token).equals(TokenStatus.VALID) &&
-                        SecurityContextHolder.getContext().getAuthentication() == null) {
+        if (!StringUtils.hasText(token)) {
+            // 토큰 없는 경우 패스
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-                    // 2. token에서 user id, role 가져옴
-                    UUID userId = jwtTokenProvider.getUserIdFromToken(token);
-
-                    // 권한 추출(예: ["ROLE_USER", "ROLE_ADMIN"])
-                    String role = jwtTokenProvider.getRoleFromToken(token);
-
-                    // 3. 권한 객체 생성 및 request에 ip, sessionId 추가
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
-
-                    UserEntity user =  userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
-
-                    // 인증 정보 구현체 (토큰 정보, role, 인증여부)
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    user,                  // principal = UUID
-                                    null,                    // credentials
-                                    List.of(authority)       // 단일 권한
-                            );
-
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                }else{
-                    SecurityContextHolder.clearContext();
-                    authenticationEntryPoint.commence(
-                            request, response,
-                            new InsufficientAuthenticationException("Invalid token")
-                    );
-                    return;
-                }
-            } catch (Exception ex) {
-                SecurityContextHolder.clearContext();
-                // 핵심: 여기서 즉시 401 반환
-                authenticationEntryPoint.commence(
-                        request,
-                        response,
-                        new InsufficientAuthenticationException("Invalid token", ex)
-                );
-                return;
+        try {
+            TokenStatus status = jwtTokenProvider.validateToken(token);
+            if (status != TokenStatus.VALID) {
+                throw new InsufficientAuthenticationException("Token invalid: " + status);
             }
-        }else{
-            // 토큰이 없는 경우 -> 401
-             authenticationEntryPoint.commence(request, response,
-                 new InsufficientAuthenticationException("Missing token"));
-             return;
+
+            UUID userId = jwtTokenProvider.getUserIdFromToken(token);
+            String role = jwtTokenProvider.getRoleFromToken(token);
+
+            UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                    user.getId(),
+                    null,
+                    List.of(new SimpleGrantedAuthority(role))
+                );
+
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext()
+                .setAuthentication(authentication);
+
+        } catch (Exception ex) {
+            SecurityContextHolder.clearContext();
+            authenticationEntryPoint.commence(
+                request, response,
+                new InsufficientAuthenticationException("Invalid token", ex)
+            );
+
+            log.warn("JWT 인증 실패: {}", ex.getMessage());
+            return;
         }
 
         filterChain.doFilter(request, response);
@@ -111,13 +100,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         return pathMatcher.match("/auth/login", path)
-                || pathMatcher.match("/auth/signup", path)
-                || pathMatcher.match("/auth/xc", path)
-                || pathMatcher.match("/auth/check-nickname", path)
-                || pathMatcher.match("/auth/refresh", path)
-                || pathMatcher.match("/v3/api-docs/**", path)
-                || pathMatcher.match("/swagger-ui/**", path)
-                || pathMatcher.match("/swagger-resources/**", path)
-                || pathMatcher.match("/h2-console/**", path);
+            || pathMatcher.match("/auth/signup", path)
+            || pathMatcher.match("/auth/xc", path)
+            || pathMatcher.match("/auth/check-nickname", path)
+            || pathMatcher.match("/auth/refresh", path)
+            || pathMatcher.match("/v3/api-docs/**", path)
+            || pathMatcher.match("/swagger-ui/**", path)
+            || pathMatcher.match("/swagger-resources/**", path)
+            || pathMatcher.match("/h2-console/**", path);
     }
 }

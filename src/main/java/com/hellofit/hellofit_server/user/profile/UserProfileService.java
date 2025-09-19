@@ -1,108 +1,92 @@
 package com.hellofit.hellofit_server.user.profile;
 
+import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
-import com.hellofit.hellofit_server.user.exception.UserNotFoundException;
+import com.hellofit.hellofit_server.user.UserService;
 import com.hellofit.hellofit_server.user.profile.dto.CreateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UpdateUserProfileRequestDto;
-import com.hellofit.hellofit_server.user.profile.dto.UserProfileResponse;
+import com.hellofit.hellofit_server.user.profile.dto.UserProfileResponseDto;
 import com.hellofit.hellofit_server.user.profile.exception.UserProfileException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.LinkedHashSet;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class UserProfileService {
+    private final UserService userService;
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
 
     /*
-    * 사용자 프로필 생성 서비스 로직
-    * */
-    public UUID createProfile(UserEntity user, CreateUserProfileRequestDto request){
-        if(userProfileRepository.existsByUserId(user.getId())){
-            throw new UserProfileException.UserProfileDuplicate("createProfile", user.getId());
+     * 사용자 프로필 생성 서비스 로직
+     * */
+    @Transactional
+    public MutationResponse createProfile(UUID userID, CreateUserProfileRequestDto request) {
+        UserEntity userEntity = userService.getUserById(userID, "createProfile");
+
+        if (userProfileRepository.existsById(userID)) {
+            throw new UserProfileException.UserProfileDuplicate("createProfile", userID);
         }
 
-        UserEntity managedUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new UserNotFoundException(user.getId()));
-
-        UserProfileEntity profile = UserProfileEntity.builder()
-                .user(managedUser)
-                .ageGroup(request.getAgeGroup())
-                .gender(request.getGender())
-                .height(request.getHeight())
-                .weight(request.getWeight())
-                .sleepMinutes(request.getSleepMinutes())
-                .exerciseMinutes(request.getExerciseMinutes())
-                .forbiddenFoods(normalizeFoods(request.getForbiddenFoods()))
-                .build();
+        UserProfileEntity profile = UserProfileEntity.create(userEntity,
+            request.getAgeGroup(),
+            request.getGender(),
+            request.getHeight(),
+            request.getWeight(),
+            request.getSleepMinutes(),
+            request.getExerciseMinutes(),
+            request.getForbiddenFoods());
 
         userProfileRepository.save(profile);
 
-        return profile.getUserId();
+        return MutationResponse.of(true);
     }
 
-    private Set<String> normalizeFoods(List<String> input) {
-        if (input == null) return new HashSet<>();
-        // 공백 트림, 빈 값 제거, 길이 제한, 중복 제거(Set)
-        return input.stream()
-                .map(s -> s == null ? null : s.trim())
-                .filter(s -> s != null && !s.isEmpty())
-                .map(s -> s.length() > 100 ? s.substring(0, 100) : s) // DB length=100 보호
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-    }
-
-    /*
-    * 유저 프로필 조회 서비스 로직
-    * */
-    public UserProfileResponse getProfileById(UUID userId){
-        UserProfileEntity userProfile = userProfileRepository.findById(userId)
-                .orElseThrow(() -> new UserProfileException.UserProfileNotFound("getProfileById", userId));
-
-        return UserProfileResponse.builder()
-                .userId(userId)
-                .ageGroup(userProfile.getAgeGroup())
-                .gender(userProfile.getGender())
-                .height(userProfile.getHeight())
-                .weight(userProfile.getWeight())
-                .sleepMinutes(userProfile.getSleepMinutes())
-                .exerciseMinutes(userProfile.getExerciseMinutes())
-                .forbiddenFoods(userProfile.getForbiddenFoods())
-                .build();
+    /**
+     * 특정 userId로 UserProfileEntity를 조회
+     *
+     * @param userId 조회할 유저의 ID
+     * @param action 호출 맥락(예: "getProfileById", "patchProfile")
+     * @return 조회된 UserProfileEntity
+     * @throws UserProfileException.UserProfileNotFound 프로필이 존재하지 않을 경우
+     */
+    public UserProfileEntity getProfileEntityById(UUID userId, String action) {
+        return userProfileRepository.findById(userId)
+            .orElseThrow(() -> new UserProfileException.UserProfileNotFound(action, userId));
     }
 
     /*
-    * 유저 정보 수정 서비스 로직
-    * */
-    public UUID patchProfile(UserEntity user, UpdateUserProfileRequestDto request) {
-        UserProfileEntity profile = userProfileRepository.findById(user.getId())
-                .orElseThrow(() -> new UserProfileException.UserProfileNotFound("patchProfile", user.getId()));
+     * 유저 프로필 조회 서비스 로직
+     * */
+    public UserProfileResponseDto.Detail getProfileById(UUID userId) {
+        UserProfileEntity profile = getProfileEntityById(userId, "getProfileById");
 
-        if (request.getAgeGroup() != null) profile.setAgeGroup(request.getAgeGroup());
-        if (request.getGender() != null)   profile.setGender(request.getGender());
-        if (request.getHeight() != null)   profile.setHeight(request.getHeight());
-        if (request.getWeight() != null)   profile.setWeight(request.getWeight());
-        if (request.getSleepMinutes() != null) profile.setSleepMinutes(request.getSleepMinutes());
-        if (request.getExerciseMinutes() != null) profile.setExerciseMinutes(request.getExerciseMinutes());
+        return UserProfileResponseDto.Detail.fromEntity(profile);
+    }
+
+    /*
+     * 유저 정보 수정 서비스 로직
+     * */
+    @Transactional
+    public UserProfileResponseDto.Detail patchProfile(UUID userId, UpdateUserProfileRequestDto request) {
+        UserProfileEntity profile = getProfileEntityById(userId, "patchProfile");
+
+        if (request.getAgeGroup() != null) profile.changeAgeGroup(request.getAgeGroup());
+        if (request.getGender() != null) profile.changeGender(request.getGender());
+        if (request.getHeight() != null) profile.changeHeight(request.getHeight());
+        if (request.getWeight() != null) profile.changeWeight(request.getWeight());
+        if (request.getSleepMinutes() != null) profile.changeSleepMinutes(request.getSleepMinutes());
+        if (request.getExerciseMinutes() != null) profile.changeExerciseMinutes(request.getExerciseMinutes());
 
         if (request.getForbiddenFoods() != null) {
-            profile.setForbiddenFoods(normalizeFoods(request.getForbiddenFoods()));
+            profile.replaceForbiddenFoods(request.getForbiddenFoods());
         }
 
-        return profile.getUserId();
+        return UserProfileResponseDto.Detail.fromEntity(profile);
     }
-
-
 }

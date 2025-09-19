@@ -10,7 +10,6 @@ import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
 import com.hellofit.hellofit_server.user.UserService;
-import com.hellofit.hellofit_server.user.exception.UserDuplicateEmailException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,16 +31,22 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
 
-    @Mock UserService userService;
-    @Mock UserRepository userRepository;
-    @Mock PasswordEncoder passwordEncoder;
-    @Mock JwtTokenProvider jwtTokenProvider;
-    @Mock RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    UserService userService;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    PasswordEncoder passwordEncoder;
+    @Mock
+    JwtTokenProvider jwtTokenProvider;
+    @Mock
+    RefreshTokenRepository refreshTokenRepository;
 
-    @InjectMocks AuthService authService;
+    @InjectMocks
+    AuthService authService;
 
     @Test
-    void signupWhenEmailExistThenFail(){
+    void signupWhenEmailExistThenFail() {
         /*
          * signup -> 이미 존재하는 이메일로 테스트할 경우 중복 fail이 발생하는지 테스트
          */
@@ -50,13 +55,14 @@ public class AuthServiceTest {
 
         // userService 중복 체크 시 바로 예외 던지도록 설정
         doThrow(new UserDuplicateEmailException(UUID.randomUUID()))
-                .when(userService).checkDuplicateEmail(request.getEmail());
+            .when(userService)
+            .checkDuplicateEmail(request.getEmail());
 
         HttpServletResponse response = mock(HttpServletResponse.class);
 
         // when
         UserDuplicateEmailException ex = assertThrows(UserDuplicateEmailException.class,
-                () -> authService.signup(request, response));
+            () -> authService.signup(request, response));
 
         // then
         assertThat(ex).hasMessageContaining("이미 가입된 이메일입니다.");
@@ -65,7 +71,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    void signupThenSuccess(){
+    void signupThenSuccess() {
         /*
          * signup -> 정상 입력 시 유저 회원가입 성공 및 토큰 발급 여부
          */
@@ -74,15 +80,17 @@ public class AuthServiceTest {
         var request = new SignupRequestDto("test@test.com", "test1234", "test", true);
 
         var savedUserEntity = UserEntity.builder()
-                .id(userId)
-                .email(request.getEmail())
-                .nickname(request.getNickname())
-                .password("en_test1234")
-                .build();
+            .id(userId)
+            .email(request.getEmail())
+            .nickname(request.getNickname())
+            .password("en_test1234")
+            .build();
 
         // repository, encoder mocking
-        doNothing().when(userService).checkDuplicateEmail(request.getEmail());
-        doNothing().when(userService).checkDuplicateNickname(request.getNickname());
+        doNothing().when(userService)
+            .checkDuplicateEmail(request.getEmail());
+        doNothing().when(userService)
+            .checkDuplicateNickname(request.getNickname());
         when(passwordEncoder.encode(request.getPassword())).thenReturn("en_test1234");
         when(userRepository.save(any(UserEntity.class))).thenReturn(savedUserEntity);
 
@@ -116,10 +124,10 @@ public class AuthServiceTest {
 
         UUID userId = UUID.randomUUID();
         UserEntity userEntity = UserEntity.builder()
-                .id(userId)
-                .email(request.getEmail())
-                .password("encoded_pw")
-                .build();
+            .id(userId)
+            .email(request.getEmail())
+            .password("encoded_pw")
+            .build();
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(request.getPassword(), userEntity.getPassword())).thenReturn(true);
@@ -140,7 +148,8 @@ public class AuthServiceTest {
         // rf 저장 검증
         ArgumentCaptor<RefreshTokenEntity> captor = ArgumentCaptor.forClass(RefreshTokenEntity.class);
         verify(refreshTokenRepository).save(captor.capture());
-        assertThat(captor.getValue().getToken()).isEqualTo("RC");
+        assertThat(captor.getValue()
+            .getToken()).isEqualTo("RC");
 
         // 쿠키 헤더 세팅 확인
         verify(response, atLeastOnce()).addHeader(eq(HttpHeaders.SET_COOKIE), contains("RC"));
@@ -161,7 +170,7 @@ public class AuthServiceTest {
 
         // when
         UnAuthorizedEmailException ex = assertThrows(UnAuthorizedEmailException.class,
-                () -> authService.login(request, response));
+            () -> authService.login(request, response));
 
         // then
         assertThat(ex).hasMessageContaining("가입되지 않은 이메일입니다.");
@@ -178,9 +187,9 @@ public class AuthServiceTest {
         LoginRequestDto request = new LoginRequestDto("test@test.com", "test1234");
 
         UserEntity userEntity = UserEntity.builder()
-                .email("test@test.com")
-                .password("encoded_pw")
-                .build();
+            .email("test@test.com")
+            .password("encoded_pw")
+            .build();
 
         when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(userEntity));
         when(passwordEncoder.matches(request.getPassword(), userEntity.getPassword())).thenReturn(false);
@@ -188,7 +197,7 @@ public class AuthServiceTest {
 
         // when
         NotMatchPasswordException ex = assertThrows(NotMatchPasswordException.class,
-                () -> authService.login(request, response));
+            () -> authService.login(request, response));
 
         // then
         assertThat(ex).hasMessageContaining("비밀번호가 일치하지 않습니다.");

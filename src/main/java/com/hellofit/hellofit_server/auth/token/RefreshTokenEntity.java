@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.auth.token;
 
+import com.hellofit.hellofit_server.global.entity.BaseEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,10 +10,8 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-@Table(name = "refresh_token")
-public class RefreshTokenEntity {
+@Table(name = "refresh_tokens")
+public class RefreshTokenEntity extends BaseEntity {
 
     @Id
     private UUID userId;
@@ -24,6 +23,14 @@ public class RefreshTokenEntity {
     @MapsId
     @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    public static RefreshTokenEntity create(String token, UserEntity user) {
+        RefreshTokenEntity rtEntity = new RefreshTokenEntity();
+        rtEntity.token = token;
+        rtEntity.user = user;
+        rtEntity.userId = user.getId();
+        return rtEntity;
+    }
 
     public void updateToken(String newToken) {
         this.token = newToken;

@@ -20,10 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * TODO : 게시글 생성, 수정, 조회, 리스트 조회 < 모두 이미지 추가
- */
-
 @Slf4j
 @RestController
 @RequestMapping("/posts")
@@ -64,7 +60,7 @@ public class PostController {
         responseCode = "200",
         description = "유저가 작성한 게시글 목록 조회 성공"
     )
-    @GetMapping
+    @GetMapping("/user")
     public ResponseEntity<CursorResponse<PostResponseDto.SummaryList>> getPostsByUser(
         @AuthenticationPrincipal UserEntity user,
         @RequestParam(required = false) LocalDateTime cursorId,
@@ -79,7 +75,7 @@ public class PostController {
         responseCode = "200",
         description = "게시글 목록 조회 성공"
     )
-    @GetMapping("/")
+    @GetMapping
     public ResponseEntity<CursorResponse<PostResponseDto.SummaryList>> getPosts(
         @RequestParam(required = false) LocalDateTime cursorId,
         @RequestParam(defaultValue = "10") int size

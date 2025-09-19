@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.like;
 
+import com.hellofit.hellofit_server.global.entity.BaseEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,16 +16,8 @@ import java.util.UUID;
     }
 )
 @Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class LikeEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
+public class LikeEntity extends BaseEntity {
     /**
      * 좋아요 누른 유저
      */
@@ -45,11 +38,14 @@ public class LikeEntity {
     @Column(name = "target_id", nullable = false, columnDefinition = "BINARY(16)")
     private UUID targetId;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+    public static LikeEntity create(UserEntity user, LikeTargetType type, UUID targetId) {
+        LikeEntity likeEntity = new LikeEntity();
+
+        likeEntity.user = user;
+        likeEntity.targetType = type;
+        likeEntity.targetId = targetId;
+
+        return likeEntity;
     }
 }
