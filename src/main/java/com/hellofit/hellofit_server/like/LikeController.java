@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Tag(name = "좋아요 API", description = "좋아요 CRUD API")
 @RestController
-@RequestMapping("/api/likes")
+@RequestMapping("/likes")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class LikeController {
