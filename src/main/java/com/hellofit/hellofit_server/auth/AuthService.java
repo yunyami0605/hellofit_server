@@ -66,10 +66,10 @@ public class AuthService {
 //                            refreshTokenRepository.save(entity);
                 },
                 () -> refreshTokenRepository.save(
-                    RefreshTokenEntity.builder()
-                        .user(user)
-                        .token(refreshToken)
-                        .build()
+                    RefreshTokenEntity.create(
+                        refreshToken,
+                        user
+                    )
                 )
             );
 
@@ -97,21 +97,20 @@ public class AuthService {
     // 회원가입
     public LoginResponseDto signup(SignupRequestDto request, HttpServletResponse response) {
         // 1. 이메일 중복 여부 체크
-        userService.checkDuplicateEmail(request.getEmail());
+        userService.checkDuplicateEmail(request.getEmail(), "AuthService > signup");
 
         // 2. : 닉네임 중복 체크
-        userService.checkDuplicateNickname(request.getNickname());
+        userService.checkDuplicateNickname(request.getNickname(), "AuthService > signup");
 
         // 3. 비밀번호 암호화
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
         // 4. 유저 정보 생성
-        UserEntity userEntity = UserEntity.builder()
-            .email(request.getEmail())
-            .password(encryptedPassword)
-            .nickname(request.getNickname())
-            .isPrivacyAgree(request.getIsPrivacyAgree())
-            .build();
+        UserEntity userEntity = UserEntity.create(
+            request.getEmail(),
+            encryptedPassword,
+            request.getNickname(),
+            request.getIsPrivacyAgree());
 
         // 5. 유저 정보 저장
         UserEntity savedUserEntity = userRepository.save(userEntity);
@@ -227,10 +226,8 @@ public class AuthService {
      * 본인 유저 정보 조회 서비스 로직
      * */
     public UserMappingResponseDto.Summary getAuthInfo(UUID userId) {
-        return this.userRepository.findById(userId)
-            .map((value) -> UserMappingResponseDto.Summary.fromEntity(value))
-            .orElseThrow(() -> new UserNotFoundException(userId));
+        UserEntity user = this.userService.getUserById(userId, "AuthService > getAuthInfo");
+
+        return UserMappingResponseDto.Summary.fromEntity(user);
     }
-
-
 }

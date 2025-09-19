@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Schema(description = "유저 생성 요청 DTO")
 public class CreateUserRequestDto {
-    @NotBlank(message = "이메일은 필수입니다.")
+    @NotBlank(message = "비밀번호는 필수입니다.")
     @Email
     @Schema(
         description = "사용자 이메일 주소",

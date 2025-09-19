@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "회원가입 요청 DTO")
 public class SignupRequestDto {
 
-    @NotBlank
+    @NotBlank(message = "비밀번호는 필수입니다.")
     @Email
     @Schema(
         description = "사용자 이메일 주소",
@@ -20,7 +20,7 @@ public class SignupRequestDto {
     )
     private String email;
 
-    @NotBlank
+    @NotBlank(message = "비밀번호는 필수입니다.")
     @Schema(
         description = "비밀번호 (8~20자, 영문/숫자 조합 권장)",
         example = "test1234",
@@ -30,8 +30,8 @@ public class SignupRequestDto {
     )
     private String password;
 
-    @NotBlank
-    @Size(min = 2, max = 12)
+    @NotBlank(message = "닉네임은 필수 입력값입니다.")
+    @Size(min = 2, max = 12, message = "닉네임은 2자 이상 12자 이하여야 합니다.")
     @Schema(
         description = "닉네임 (2~12자)",
         example = "test",
