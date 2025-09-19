@@ -1,19 +1,17 @@
 package com.hellofit.hellofit_server.image;
 
+import com.hellofit.hellofit_server.global.entity.BaseEntity;
 import com.hellofit.hellofit_server.global.entity.SoftDeletableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
-
-import java.util.List;
-
 
 @Entity
 @Table(name = "images")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @SQLRestriction("deleted_at IS NULL")
-public class ImageEntity extends SoftDeletableEntity {
+public class ImageEntity extends BaseEntity {
 
     // s3 object key
     @Column(nullable = false)
@@ -26,6 +24,7 @@ public class ImageEntity extends SoftDeletableEntity {
     @Column(nullable = false)
     private String targetId;
 
+    @OrderBy("sortOrder ASC")
     private Integer sortOrder;
 
     public static ImageEntity create(String objectKey, ImageTargetType targetType, String targetId, Integer sortOrder) {

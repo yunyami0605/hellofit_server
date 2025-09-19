@@ -72,7 +72,12 @@ public enum ErrorCode {
 
     // 댓글을 찾을 수 없는 경우
     @Schema(description = ErrorMessage.COMMENT_NOT_FOUND)
-    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.COMMENT_NOT_FOUND);
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.COMMENT_NOT_FOUND),
+
+    // ===== Image 관련 =====
+    // 이미지를 찾을 수 없는 겨우
+    @Schema(description = ErrorMessage.IMAGE_NOT_FOUND)
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.IMAGE_NOT_FOUND);
 
     private final HttpStatus status;
     private final String message;

@@ -28,4 +28,7 @@ public class ErrorMessage {
 
     // ===== Comment 관련 =====
     public static final String COMMENT_NOT_FOUND = "댓글을 찾을 수 없습니다.";
+
+    // ===== Image 관련 =====
+    public static final String IMAGE_NOT_FOUND = "이미지를 찾을 수 없습니다.";
 }
