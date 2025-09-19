@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "refresh_tokens")
-public class RefreshTokenEntity extends BaseEntity {
+public class RefreshTokenEntity {
 
     @Id
     private UUID userId;
