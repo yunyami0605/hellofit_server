@@ -8,16 +8,17 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class PostRequestDto {
 
-    @Getter @Setter
-    @NoArgsConstructor @AllArgsConstructor
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
-    public static class Create{
+    public static class Create {
         @NotBlank(message = "제목은 필수 입력값입니다.")
-        @Size(max = 80, message = "제목은 최대 80자까지 입력 가능합니다.")
+        @Size(min = 1, max = 80, message = "제목은 최대 80자까지 입력 가능합니다.")
         private String title;
 
         @NotBlank(message = "내용은 필수 입력값입니다.")
@@ -27,12 +28,14 @@ public class PostRequestDto {
         private List<String> imageKeys;
     }
 
-    @Getter @Setter
-    @NoArgsConstructor @AllArgsConstructor
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
-    public static class Update{
+    public static class Update {
         @NotBlank(message = "제목은 필수 입력값입니다.")
-        @Size(max = 80, message = "제목은 최대 80자까지 입력 가능합니다.")
+        @Size(min = 1, max = 80, message = "제목은 최대 80자까지 입력 가능합니다.")
         private String title;
 
         @NotBlank(message = "내용은 필수 입력값입니다.")

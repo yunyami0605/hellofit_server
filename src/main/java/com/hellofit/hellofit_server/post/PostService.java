@@ -5,14 +5,17 @@ import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.exception.CommonException;
 import com.hellofit.hellofit_server.image.ImageEntity;
+import com.hellofit.hellofit_server.image.ImageRepository;
+import com.hellofit.hellofit_server.image.ImageService;
+import com.hellofit.hellofit_server.image.ImageTargetType;
 import com.hellofit.hellofit_server.image.dto.ImageResponseDto;
 import com.hellofit.hellofit_server.like.LikeRepository;
 import com.hellofit.hellofit_server.like.LikeTargetType;
 import com.hellofit.hellofit_server.post.dto.PostRequestDto;
 import com.hellofit.hellofit_server.post.dto.PostResponseDto;
 import com.hellofit.hellofit_server.post.exception.PostException;
-import com.hellofit.hellofit_server.post.image.PostImageEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
+import com.hellofit.hellofit_server.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,22 +40,25 @@ public class PostService {
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final AwsService awsService;
+    private final ImageService imageService;
+    private final UserService userService;
+    private final ImageRepository imageRepository;
 
     // 유저 본인 게시글 목록 조회
 
     /**
      * 유저 본인 게시글 목록 조회
      *
-     * @param user     user id
+     * @param userId   user id
      * @param cursorId createdAt 기준 cursor 방식
      * @param size     조회 사이즈
      */
-    public CursorResponse<PostResponseDto.SummaryList> getPostsByUser(UserEntity user, LocalDateTime cursorId, int size) {
-        // 1. 11개 페이지 요청
+    public CursorResponse<PostResponseDto.SummaryList> getPostsByUser(UUID userId, LocalDateTime cursorId, int size) {
+        // 1. size + 1개 페이지 요청
         Pageable pageable = PageRequest.of(0, size + 1);
 
-        // 2. cursorId로 11개 페이지 조회
-        List<PostEntity> posts = this.postRepository.findByUserIdWithCursor(user.getId(), cursorId, pageable);
+        // 2. cursorId 기준으로 size + 1개 페이지 조회
+        List<PostEntity> posts = this.postRepository.findByUserIdWithCursor(userId, cursorId, pageable);
 
         // 3. db로 조회한 posts 갯수가 11개이면 hasNext = true -> 기존 요청 size로 array 분리
         boolean hasNext = posts.size() > size;
@@ -62,18 +68,18 @@ public class PostService {
         List<PostResponseDto.SummaryList> items = content
             .stream()
             .map((_posts) -> {
-                    List<String> presignedImages = _posts.getPostImages()
+                    List<ImageEntity> imageEntities = this.imageService.getImages(ImageTargetType.POST, _posts.getId());
+
+                    List<String> presignedImages = imageEntities
                         .stream()
                         .map((_image) -> {
-                                String key = _image.getImage()
-                                    .getObjectKey();
+                                String key = _image.getObjectKey();
 
                                 if (key == null || key.trim()
                                     .isEmpty()) {
                                     return null;
                                 }
-                                return awsService.presignedGetUrl(_image.getImage()
-                                    .getObjectKey());
+                                return awsService.presignedGetUrl(key);
                             }
                         )
                         .toList();
@@ -105,10 +111,10 @@ public class PostService {
     // 게시글 목록 조회
     @Transactional(readOnly = true)
     public CursorResponse<PostResponseDto.SummaryList> getPosts(LocalDateTime cursorId, int size) {
-        // 1. 11개 페이지 요청
+        // 1. size + 1개 페이지 요청
         Pageable pageable = PageRequest.of(0, size + 1);
 
-        // 2. cursorId로 11개 페이지 조회
+        // 2. cursorId로 size + 1개 페이지 조회
         List<PostEntity> posts = postRepository.findPostsByCursor(cursorId, pageable);
 
         // 3. 다음 게시글 있는지 체크
@@ -119,19 +125,17 @@ public class PostService {
         List<PostResponseDto.SummaryList> items = contents
             .stream()
             .map((_posts) -> {
-                    List<String> presignedImages = _posts.getPostImages()
+                    List<String> presignedImages = this.imageService.getImages(ImageTargetType.POST, _posts.getId())
                         .stream()
                         .map((_image) -> {
-                                String key = _image.getImage()
-                                    .getObjectKey();
+                                String key = _image.getObjectKey();
 
                                 if (key == null || key.trim()
                                     .isEmpty()) {
                                     return null;
                                 }
 
-                                return awsService.presignedGetUrl(_image.getImage()
-                                    .getObjectKey());
+                                return awsService.presignedGetUrl(key);
                             }
                         )
                         .toList();
@@ -160,19 +164,26 @@ public class PostService {
     }
 
     /**
+     * 게시글 조회 (헬퍼 메서드)
+     */
+    public PostEntity getPostById(UUID id, String errorPoint) {
+        return postRepository.findById(id)
+            .orElseThrow(() -> new PostException.NotFound(errorPoint, id));
+    }
+
+    /**
      * 게시글 조회
      */
     @Transactional
     public PostResponseDto.Summary getPostOne(UUID id) {
-        PostEntity postEntity = postRepository.findById(id)
-            .orElseThrow(() -> new PostException.NotFound("PostSevice -> getPost", id.toString()));
+        PostEntity postEntity = this.getPostById(id, "PostService > getPostOne");
 
         postEntity.increaseViewCount();
 
-        List<String> presignedGetKey = postEntity.getPostImages()
+        List<String> presignedGetKey = this.imageService.getImages(ImageTargetType.POST, id)
             .stream()
             .map((_image) ->
-                awsService.presignedGetUrl(_image.getImage()
+                awsService.presignedGetUrl(_image
                     .getObjectKey())
             )
             .toList();
@@ -184,24 +195,31 @@ public class PostService {
     /**
      * 게시글 검색
      *
-     * @param keyword : 검색 키워드
+     * @param keyword : 검색 키워드 (null 또는 공백이면 전체 게시글 조회)
      */
     public List<PostResponseDto.Summary> getSearchPosts(String keyword) {
-        return postRepository.findByTitleContaining(keyword)
-            .stream()
-            .map((_post) -> {
-                List<String> presignedImages = _post.getPostImages()
+        List<PostEntity> posts;
+
+        if (keyword == null || keyword.isBlank()) {
+            // keyword가 없으면 전체 게시글 조회
+            posts = postRepository.findAll();
+        } else {
+            // keyword가 있으면 제목 검색
+            posts = postRepository.findByTitleContaining(keyword);
+        }
+
+        return posts.stream()
+            .map(post -> {
+                List<String> presignedImages = imageService.getImages(ImageTargetType.POST, post.getId())
                     .stream()
-                    .map((_image) ->
-                        awsService.presignedGetUrl(_image.getImage()
-                            .getObjectKey())
-                    )
+                    .map(img -> awsService.presignedGetUrl(img.getObjectKey()))
                     .toList();
 
-                return PostResponseDto.Summary.from(_post, presignedImages);
+                return PostResponseDto.Summary.from(post, presignedImages);
             })
             .toList();
     }
+
 
     /*
      * 게시글 등록 서비스 로직
@@ -209,35 +227,33 @@ public class PostService {
     @Transactional
     public MutationResponse createPost(
         PostRequestDto.Create request,
-        UserEntity user
+        UUID userId
     ) {
-        // 1. post 객체 생성
-        PostEntity post = PostEntity.builder()
-            .title(request.getTitle())
-            .content(request.getContent())
-            .user(user)
-            .build();
+        // 1. 작성자 조회
+        UserEntity author = this.userService.getUserById(userId, "PostService > createPost");
 
-        // 2. 이미지 생성 후, 게시글 연결
+        // 2. post 객체 생성
+        PostEntity post = PostEntity.Create(
+            author,
+            request.getTitle(),
+            request.getContent()
+        );
+
+        // 3. 이미지 생성 후, 게시글 연결
         IntStream.range(0, request.getImageKeys()
                 .size())
             .forEach((i) -> {
                 String key = request.getImageKeys()
                     .get(i);
 
-                ImageEntity image = ImageEntity
-                    .builder()
-                    .objectKey(key)
-                    .build();
-
-                post.addImage(image, i);
+                this.imageService.createImage(key, ImageTargetType.POST, post.getId(), i);
             });
 
-        // 3. 저장
+        // 4. 저장
         postRepository.save(post);
 
         return MutationResponse.builder()
-            .id(post.getId())
+            .success(true)
             .build();
     }
 
@@ -247,76 +263,64 @@ public class PostService {
     @Transactional
     public MutationResponse updatePost(UUID userId, UUID postId, PostRequestDto.Update requestDto) {
         // 1. 게시글 조회
-        PostEntity post = postRepository.findById(postId)
-            .orElseThrow(() -> new PostException.NotFound("update post", postId.toString()));
+        PostEntity postEntity = this.getPostById(postId, "PostService > updatePost");
 
         // 2. 작성자인지 검증
-        if (!post.getUser()
+        if (!postEntity.getUser()
             .getId()
             .equals(userId)) {
             throw new CommonException.Forbidden("updatePost", userId.toString());
         }
 
         // 3. 게시글 수정 데이터 입력
-        post.setTitle(requestDto.getTitle());
-        post.setContent(requestDto.getContent());
+        postEntity.changeTitle(requestDto.getTitle());
+        postEntity.changeContent(requestDto.getContent());
 
         // 4. db 이미지 가져오기
-        List<PostImageEntity> currentImages = post.getPostImages();
+        List<ImageEntity> currentImages = this.imageService.getImages(ImageTargetType.POST, postEntity.getId());
         Set<String> currentKeys = currentImages.stream()
-            .map((_image) -> _image.getImage()
-                .getObjectKey())
+            .map((_image) -> _image.getObjectKey())
             .collect(Collectors.toSet());
 
         // 5. request 이미지 중복 제거
         List<String> newKeys = requestDto.getImageKeys();
         Set<String> newKeySet = new HashSet<>(newKeys);
 
-        // 6. s3 객체 제거
+        // 6. 요청에 없는 s3 객체 및 이미지 제거
         currentImages.forEach((_image) -> {
-            String _objectKey = _image.getImage()
-                .getObjectKey();
+            String _objectKey = _image.getObjectKey();
 
             if (!newKeySet.contains(_objectKey)) {
-                awsService.deleteObject(_objectKey);
+                // db 이미지 및 s3 객체 삭제
+                this.imageService.deleteImage(_image.getId());
             }
         });
 
-        // 7. 수정 요청에 없는 이미지들 제거 (orphan = true)
-        currentImages.removeIf(_image -> !newKeySet.contains(_image.getImage()
-            .getObjectKey()));
-
-        // 8. 수정 요청에 새로 추가된 이미지 연결
+        // 7. 수정 요청에 새로 추가된 이미지 생성
         IntStream.range(0, newKeys.size())
             .forEach(i -> {
                 String key = newKeys.get(i);
                 if (!currentKeys.contains(key)) {
                     // 현재 키 목록 중, 없으면 새로 생성 후 추가
-                    ImageEntity newImage = ImageEntity.builder()
-                        .objectKey(key)
-                        .build();
-
-                    post.addImage(newImage, i);
+                    this.imageService.createImage(key, ImageTargetType.POST, postId, i);
                 }
             });
 
 
-        // 9. 요청 순서에 따라 이미지 순서 재정렬
+        // 8. 요청 순서에 따라 이미지 순서 재정렬
         IntStream.range(0, newKeys.size())
             .forEach(i -> {
                 String key = newKeys.get(i);
 
                 currentImages.stream()
-                    .filter(img -> img.getImage()
+                    .filter(img -> img
                         .getObjectKey()
                         .equals(key))
                     .findFirst()
-                    .ifPresent(img -> img.setSortOrder(i));
+                    .ifPresent(img -> img.changeSortOrder(i));
             });
 
-        return MutationResponse.builder()
-            .id(postId)
-            .build();
+        return MutationResponse.of(true);
     }
 
     /**
@@ -328,29 +332,22 @@ public class PostService {
     @Transactional
     public MutationResponse deletePostOne(UUID authorId, UUID id) {
         // 1. 게시글 데이터 조회
-        PostEntity post = postRepository.findById(id)
-            .orElseThrow(() -> new PostException.NotFound("post service -> deletePostOne", id.toString()));
+        PostEntity post = this.getPostById(id, "PostService > deletePostOne");
 
         // 2. 작성자인지 체크
         if (!post.getUser()
             .getId()
             .equals(authorId)) {
-            throw new CommonException.Forbidden("post service -> deletePostOne", authorId.toString());
+            throw new CommonException.Forbidden("PostService -> deletePostOne", authorId.toString());
         }
 
         // 3. s3 객체 제거
-        post.getPostImages()
-            .forEach((_image) ->
-                awsService.deleteObject(_image.getImage()
-                    .getObjectKey())
-            );
+        this.imageService.deleteImageByTargetTypeAndTargetId(ImageTargetType.POST, id);
 
         // 4. 삭제
         postRepository.delete(post);
 
-        return MutationResponse.builder()
-            .id(id)
-            .build();
+        return MutationResponse.of(true);
     }
 
     /*
@@ -358,15 +355,13 @@ public class PostService {
      * */
     public PostResponseDto.PatchData getPatchPostOne(UUID id) {
         // 1. 게시글 조회
-        PostEntity post = postRepository.findById(id)
-            .orElseThrow(() -> new PostException.NotFound("getPatchPostOne", id.toString()));
+        PostEntity post = this.getPostById(id, "PostService > getPatchPostOne");
 
         // 2. aws s3에 presignedUrl 요청
-        List<ImageResponseDto.DataBeforeMutation> images = post.getPostImages()
+        List<ImageResponseDto.DataBeforeMutation> images = this.imageService.getImages(ImageTargetType.POST, id)
             .stream()
             .map((_images) -> {
-                String objectKey = _images.getImage()
-                    .getObjectKey();
+                String objectKey = _images.getObjectKey();
 
                 String presignedUrl = awsService.presignedGetUrl(objectKey);
 

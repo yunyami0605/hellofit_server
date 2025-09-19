@@ -48,6 +48,21 @@ public class PostEntity extends SoftDeletableEntity {
         return postEntity;
     }
 
+
+    public void changeTitle(String title) {
+        if (title.isBlank()) {
+            throw new IllegalArgumentException("잘못된 데이터입니다.");
+        }
+        this.title = title;
+    }
+
+    public void changeContent(String content) {
+        if (content.isBlank()) {
+            throw new IllegalArgumentException("잘못된 데이터입니다.");
+        }
+        this.content = content;
+    }
+
     // 조회수 증가
     public void increaseViewCount() {
         this.viewCount++;
