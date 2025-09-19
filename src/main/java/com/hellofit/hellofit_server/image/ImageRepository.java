@@ -8,6 +8,7 @@ import java.util.UUID;
 public interface ImageRepository extends JpaRepository<ImageEntity, UUID> {
 
     List<ImageEntity> findByTargetTypeAndTargetIdOrderBySortOrderAsc(
-        ImageTargetType targetType, String targetId
+        ImageTargetType targetType, UUID targetId
     );
+
 }

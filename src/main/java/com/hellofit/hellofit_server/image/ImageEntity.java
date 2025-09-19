@@ -1,10 +1,11 @@
 package com.hellofit.hellofit_server.image;
 
 import com.hellofit.hellofit_server.global.entity.BaseEntity;
-import com.hellofit.hellofit_server.global.entity.SoftDeletableEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
+
+import java.util.UUID;
 
 @Entity
 @Table(name = "images")
@@ -22,12 +23,12 @@ public class ImageEntity extends BaseEntity {
     private ImageTargetType targetType;
 
     @Column(nullable = false)
-    private String targetId;
+    private UUID targetId;
 
     @OrderBy("sortOrder ASC")
     private Integer sortOrder;
 
-    public static ImageEntity create(String objectKey, ImageTargetType targetType, String targetId, Integer sortOrder) {
+    public static ImageEntity create(String objectKey, ImageTargetType targetType, UUID targetId, Integer sortOrder) {
         ImageEntity imageEntity = new ImageEntity();
         imageEntity.objectKey = objectKey;
         imageEntity.targetType = targetType;
@@ -35,6 +36,13 @@ public class ImageEntity extends BaseEntity {
         imageEntity.sortOrder = sortOrder;
 
         return imageEntity;
+    }
 
+
+    public void changeSortOrder(Integer sortOrder) {
+        if (sortOrder < 0) {
+            throw new IllegalArgumentException("잘못된 데이터입니다.");
+        }
+        this.sortOrder = sortOrder;
     }
 }

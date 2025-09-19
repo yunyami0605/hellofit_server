@@ -26,7 +26,7 @@ public class ImageService {
      * @param sortOrder  출력순
      */
     @Transactional
-    public ImageEntity createImage(String objectKey, ImageTargetType targetType, String targetId, Integer sortOrder) {
+    public ImageEntity createImage(String objectKey, ImageTargetType targetType, UUID targetId, Integer sortOrder) {
         ImageEntity imageEntity = ImageEntity.create(objectKey, targetType, targetId, sortOrder);
         return imageRepository.save(imageEntity);
     }
@@ -34,7 +34,7 @@ public class ImageService {
     /**
      * target id의 이미지 가져오기 (sort 순서 보장)
      */
-    public List<ImageEntity> getImages(ImageTargetType targetType, String targetId) {
+    public List<ImageEntity> getImages(ImageTargetType targetType, UUID targetId) {
         return imageRepository.findByTargetTypeAndTargetIdOrderBySortOrderAsc(targetType, targetId);
     }
 
@@ -58,6 +58,24 @@ public class ImageService {
 
         // 3. db image 정보 삭제
         this.imageRepository.deleteById(id);
+
+        return MutationResponse.of(true);
+    }
+
+    /**
+     * target type, id로 조회된 이미지 리스트 삭제
+     */
+    @Transactional
+    public MutationResponse deleteImageByTargetTypeAndTargetId(ImageTargetType targetType, UUID targetId) {
+        // 1. 이미지 조회
+        this.getImages(targetType, targetId)
+            .forEach((_image) -> {
+                // 2. aws 삭제
+                this.awsService.deleteObject(_image.getObjectKey());
+
+                // 3. db image 정보 삭제
+                this.imageRepository.deleteById(_image.getId());
+            });
 
         return MutationResponse.of(true);
     }
