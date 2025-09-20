@@ -15,6 +15,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -50,49 +52,38 @@ public class AuthService {
     /*
      * ac, rf, xsrf token 생성 및 헤더 설정
      * */
+    @Transactional
     public LoginResponseDto setAuthToken(UserEntity user, HttpServletResponse response) {
-        // 1. ac, rf token 생성
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), null);
-
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), null);
 
+        RefreshTokenEntity tokenEntity = refreshTokenRepository.findById(user.getId())
+            .orElse(null);
 
-        // 2. rf Token 조회 → 있으면 update, 없으면 save
-        refreshTokenRepository.findByUser_Id(user.getId())
-            .ifPresentOrElse(
-                entity -> {
+        if (tokenEntity == null) {
+            // 신규 저장
+            tokenEntity = RefreshTokenEntity.create(refreshToken, user);
+            refreshTokenRepository.save(tokenEntity);
+        } else {
+            // 기존 값만 업데이트
+            tokenEntity.updateToken(refreshToken);
+        }
 
-                    entity.updateToken(refreshToken); // 엔티티에 update 메서드 추가
-//                            refreshTokenRepository.save(entity);
-                },
-                () -> refreshTokenRepository.save(
-                    RefreshTokenEntity.create(
-                        refreshToken,
-                        user
-                    )
-                )
-            );
-
-        // 3. 쿠키에 설정해서 응답
         ResponseCookie refreshCookie = ResponseCookie.from(AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken)
             .httpOnly(true)
-//                .secure(true)
             .sameSite("None")
             .path("/")
-            // .domain(".example.com")
             .maxAge(AuthConstant.REFRESH_TOKEN_LIFETIME)
             .build();
 
-        // 3.1. xsrf 토큰 헤더 설정
         setXSRFToken(response);
-
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-        // 4. ac, rf 토큰 반환 반환
         return LoginResponseDto.builder()
             .access(accessToken)
             .build();
     }
+
 
     // 회원가입
     public LoginResponseDto signup(SignupRequestDto request, HttpServletResponse response) {
@@ -101,6 +92,11 @@ public class AuthService {
 
         // 2. : 닉네임 중복 체크
         userService.checkDuplicateNickname(request.getNickname(), "AuthService > signup");
+
+
+        log.info(
+            "pw: {}", request.getPassword()
+        );
 
         // 3. 비밀번호 암호화
         String encryptedPassword = passwordEncoder.encode(request.getPassword());

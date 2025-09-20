@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class UserProfileEntity {
 
     @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", columnDefinition = "CHAR(36)")
     private UUID userId; // PK = FK
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
@@ -23,6 +23,7 @@ public class UserProfileEntity {
     @JoinColumn(
         name = "user_id",
         referencedColumnName = "id",
+        columnDefinition = "CHAR(36)",
         foreignKey = @ForeignKey(name = "fk_user_profile_user"))
     private UserEntity user;
 

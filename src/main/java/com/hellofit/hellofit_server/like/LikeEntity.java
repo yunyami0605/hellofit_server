@@ -21,7 +21,11 @@ public class LikeEntity extends BaseEntity {
      * 좋아요 누른 유저
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(
+        name = "user_id",
+        nullable = false,
+        columnDefinition = "CHAR(36)"
+    )
     private UserEntity user;
 
     /**
@@ -34,7 +38,7 @@ public class LikeEntity extends BaseEntity {
     /**
      * 대상 PK (PostEntity.id, CommentEntity.id 등)
      */
-    @Column(name = "target_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "target_id", nullable = false, columnDefinition = "CHAR(36)")
     private UUID targetId;
 
 

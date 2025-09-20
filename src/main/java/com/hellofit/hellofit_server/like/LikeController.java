@@ -29,11 +29,11 @@ public class LikeController {
     )
     @PostMapping("/toggle/{targetType}/{targetId}")
     public Boolean togglePostLike(
-        @AuthenticationPrincipal UserEntity user,
+        @AuthenticationPrincipal UUID userId,
         @PathVariable LikeTargetType targetType,
         @PathVariable UUID targetId
     ) {
-        return likeService.togglePostLike(user.getId(), targetType, targetId);
+        return likeService.togglePostLike(userId, targetType, targetId);
     }
 
     @GetMapping("/{targetType}/{targetId}/count")

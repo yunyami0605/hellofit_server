@@ -22,7 +22,7 @@ public class ImageEntity extends BaseEntity {
     @Column(nullable = false, length = 20)
     private ImageTargetType targetType;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "CHAR(36)")
     private UUID targetId;
 
     @OrderBy("sortOrder ASC")

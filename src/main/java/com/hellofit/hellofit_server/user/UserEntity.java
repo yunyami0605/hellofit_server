@@ -1,9 +1,9 @@
 package com.hellofit.hellofit_server.user;
 
 import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
-import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
 import com.hellofit.hellofit_server.comment.CommentEntity;
 import com.hellofit.hellofit_server.global.entity.SoftDeletableEntity;
+import com.hellofit.hellofit_server.like.LikeEntity;
 import com.hellofit.hellofit_server.post.PostEntity;
 import com.hellofit.hellofit_server.user.profile.UserProfileEntity;
 import jakarta.persistence.*;
@@ -41,11 +41,17 @@ public class UserEntity extends SoftDeletableEntity {
     /**
      * 1:1 Refresh Token
      */
-    @OneToOne(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private RefreshTokenEntity refreshToken;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LikeEntity> likes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommentEntity> comments = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserProfileEntity profile;
 
     /**
      * 1:N Posts

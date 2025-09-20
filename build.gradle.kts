@@ -61,6 +61,10 @@ dependencies {
     // aws env대신 secret 키 설정
     implementation("io.awspring.cloud:spring-cloud-aws-starter-secrets-manager:3.4.0")
 
+    // 스키마 변경 관리
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
+
 }
 
 tasks.withType<Test> {

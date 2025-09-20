@@ -15,7 +15,7 @@ spring:
 
     jpa:
         hibernate:
-            ddl-auto: update
+            ddl-auto: none
 
         show-sql: true
         properties:
@@ -28,6 +28,12 @@ spring:
     web:
         resources:
             add-mappings: false
+
+    flyway:
+        enabled: true
+        baseline-on-migrate: false   # 기존 DB 있을 때 기준선 생성
+        validate-on-migrate: true
+        locations: classpath:db/migration
 
 server:
     port: 8084

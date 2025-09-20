@@ -31,7 +31,11 @@ public class PostEntity extends SoftDeletableEntity {
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(
+        name = "user_id",
+        nullable = false,
+        columnDefinition = "CHAR(36)"
+    )
     private UserEntity user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -4,7 +4,7 @@ import com.hellofit.hellofit_server.auth.constants.TokenStatus;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -15,12 +15,6 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
     public enum Role {USER, ADMIN}
-
-//    @Value("${jwt.secret}")
-//    private String secretKey;
-//
-//    @Value("${jwt.expiration}")
-//    private long validityInMilliseconds;
 
     private final String secretKey = "SuperStrongSecretKeyForJWT"; // 직접 하드코딩
     private final long validityInMilliseconds = 36000000L;
@@ -119,6 +113,7 @@ public class JwtTokenProvider {
         } catch (ExpiredJwtException e) {
             return TokenStatus.EXPIRED;
         } catch (JwtException | IllegalArgumentException e) {
+
             return TokenStatus.INVALID;
         }
     }

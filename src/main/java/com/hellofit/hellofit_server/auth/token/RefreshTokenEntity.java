@@ -1,6 +1,5 @@
 package com.hellofit.hellofit_server.auth.token;
 
-import com.hellofit.hellofit_server.global.entity.BaseEntity;
 import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,30 +13,25 @@ import java.util.UUID;
 public class RefreshTokenEntity {
 
     @Id
-    private UUID userId;
+    @Column(name = "user_id", columnDefinition = "CHAR(36)")
+    private UUID id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "user_id", columnDefinition = "CHAR(36)")
+    private UserEntity user;
 
     @Column(nullable = false, length = 255)
     private String token;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "user_id")
-    private UserEntity user;
-
     public static RefreshTokenEntity create(String token, UserEntity user) {
         RefreshTokenEntity rtEntity = new RefreshTokenEntity();
-        rtEntity.token = token;
         rtEntity.user = user;
-        rtEntity.userId = user.getId();
+        rtEntity.token = token;
         return rtEntity;
     }
 
     public void updateToken(String newToken) {
         this.token = newToken;
     }
-
-//    @Column(nullable = false)
-//    private String deviceId; // 클라이언트에서 Localstorage UUID 넘거준걸 디바이스 저장
-
-
 }

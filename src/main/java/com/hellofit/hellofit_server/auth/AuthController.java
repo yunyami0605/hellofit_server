@@ -24,6 +24,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 
 @Slf4j
 @RestController
@@ -91,8 +93,8 @@ public class AuthController {
     )
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@AuthenticationPrincipal UserEntity user) {
-        authService.logout(user.getId());
+    public void logout(@AuthenticationPrincipal UUID userId) {
+        authService.logout(userId);
     }
 
     @Operation(summary = "본인 유저 정보 조회 API")
@@ -102,8 +104,8 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))
     )
     @GetMapping("/info")
-    public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UserEntity user) {
-        return authService.getAuthInfo(user.getId());
+    public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UUID userId) {
+        return authService.getAuthInfo(userId);
     }
 
     @Operation(summary = "XSRF Token 발급 API")
