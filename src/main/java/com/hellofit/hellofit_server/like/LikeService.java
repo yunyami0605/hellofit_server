@@ -46,7 +46,7 @@ public class LikeService {
     /**
      * 좋아요 갯수 조회
      */
-    public int getLikeCount(UUID targetId, LikeTargetType type) {
+    public Integer getLikeCount(UUID targetId, LikeTargetType type) {
         return likeRepository.countByTargetTypeAndTargetId(type, targetId);
     }
 }

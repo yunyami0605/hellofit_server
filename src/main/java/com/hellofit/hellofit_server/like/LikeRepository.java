@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface LikeRepository extends JpaRepository<LikeEntity, UUID> {
     Optional<LikeEntity> findByUserAndTargetTypeAndTargetId(UserEntity user, LikeTargetType targetType, UUID targetId);
 
-    int countByTargetTypeAndTargetId(LikeTargetType targetType, UUID targetId);
+    Integer countByTargetTypeAndTargetId(LikeTargetType targetType, UUID targetId);
 
     @Query("""
         SELECT l.targetId, COUNT(l)
