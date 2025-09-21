@@ -7,6 +7,8 @@ import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -15,16 +17,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/comments")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
+@Tag(name = "댓글/답글 API", description = "댓글/답글 CRUD API")
 public class CommentController {
 
     private final CommentService commentService;
 
     @Operation(summary = "게시글 댓글 조회 (cursor 방식)")
     @ApiResponse(responseCode = "200", description = "댓글 조회 성공")
-    @GetMapping("/post/{postId}")
+    @GetMapping("/post/{postId}/comments")
     public CursorResponse<CommentResponseDto.Summary> getCommentsByPost(
         @PathVariable UUID postId,
         @RequestParam(required = false) LocalDateTime cursor,
@@ -38,7 +40,7 @@ public class CommentController {
      */
     @Operation(summary = "특정 댓글의 답글 목록 조회 (cursor 방식)")
     @ApiResponse(responseCode = "200", description = "답글 목록 조회 성공")
-    @GetMapping("/{commentId}/recomments")
+    @GetMapping("/comments/{commentId}/recomments")
     public CursorResponse<CommentResponseDto.Summary> getRecomments(
         @PathVariable UUID commentId,
         @RequestParam(required = false) LocalDateTime cursor,
@@ -53,7 +55,7 @@ public class CommentController {
      */
     @Operation(summary = "유저 댓글 조회 (cursor 방식)")
     @ApiResponse(responseCode = "200", description = "유저 댓글 조회 성공")
-    @GetMapping("/user")
+    @GetMapping("/comments/me")
     public CursorResponse<CommentResponseDto.Summary> getUserComments(
         @AuthenticationPrincipal UUID userId,
         @RequestParam(required = false) LocalDateTime cursor,
@@ -63,25 +65,25 @@ public class CommentController {
     }
 
     /**
-     * 댓글 생성
+     * 댓글/답글 생성
      */
-    @Operation(summary = "댓글 생성")
-    @ApiResponse(responseCode = "200", description = "댓글 생성 성공")
-    @PostMapping("/post/{postId}")
+    @Operation(summary = "댓글/답글 생성")
+    @ApiResponse(responseCode = "200", description = "댓글/답글 생성 성공")
+    @PostMapping("/posts/{postId}/comments")
     public MutationResponse createComment(
         @AuthenticationPrincipal UUID userId,
         @PathVariable UUID postId,
-        @RequestBody CommentRequestDto.Create request
+        @RequestBody @Valid CommentRequestDto.Create request
     ) {
-        return commentService.createComment(postId, userId, request.getContent());
+        return commentService.createComment(postId, userId, request);
     }
 
     /**
-     * 댓글 수정
+     * 댓글/답글 수정
      */
-    @Operation(summary = "댓글 수정")
-    @ApiResponse(responseCode = "200", description = "댓글 수정 성공")
-    @PatchMapping("/{commentId}")
+    @Operation(summary = "댓글/답글 수정")
+    @ApiResponse(responseCode = "200", description = "댓글/답글 수정 성공")
+    @PatchMapping("/comments/{commentId}")
     public MutationResponse updateComment(
         @AuthenticationPrincipal UUID userId,
         @PathVariable UUID commentId,
@@ -91,28 +93,15 @@ public class CommentController {
     }
 
     /**
-     * 댓글 삭제 (Soft Delete)
+     * 댓글/답글 삭제 (Soft Delete)
      */
-    @Operation(summary = "댓글 삭제")
-    @ApiResponse(responseCode = "200", description = "댓글 삭제 성공")
-    @DeleteMapping("/{commentId}")
+    @Operation(summary = "댓글/답글 삭제")
+    @ApiResponse(responseCode = "200", description = "댓글/답글 삭제 성공")
+    @DeleteMapping("/comments/{commentId}")
     public MutationResponse deleteComment(
         @AuthenticationPrincipal UUID userId,
         @PathVariable UUID commentId) {
         return commentService.deleteComment(commentId, userId);
     }
 
-    /**
-     * 답글 생성
-     */
-    @Operation(summary = "답글 생성")
-    @ApiResponse(responseCode = "200", description = "답글 생성 성공")
-    @PostMapping("/{commentId}/recomments")
-    public MutationResponse createRecomment(
-        @AuthenticationPrincipal UUID userId,
-        @PathVariable UUID commentId,
-        @RequestBody CommentRequestDto.Create request
-    ) {
-        return commentService.createRecomment(userId, request.getContent(), commentId);
-    }
 }

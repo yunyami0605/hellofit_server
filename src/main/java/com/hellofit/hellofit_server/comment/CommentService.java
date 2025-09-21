@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.comment;
 
+import com.hellofit.hellofit_server.comment.dto.CommentRequestDto;
 import com.hellofit.hellofit_server.comment.dto.CommentResponseDto;
 import com.hellofit.hellofit_server.comment.exception.CommentException;
 import com.hellofit.hellofit_server.global.dto.CursorResponse;
@@ -128,14 +129,37 @@ public class CommentService {
     }
 
     /**
-     * 댓글 생성
+     * 댓글/답글 생성
      */
     @Transactional
-    public MutationResponse createComment(UUID postId, UUID userId, String content) {
-        UserEntity user = this.userService.getUserById(userId, "CommentService > createComment");
-        PostEntity post = this.postService.getPostById(postId, "CommentService > createComment");
+    public MutationResponse createComment(UUID postId, UUID userId, CommentRequestDto.Create request) {
+        UserEntity userEntity = this.userService.getUserById(userId, "CommentService > createComment");
+        PostEntity postEntity = this.postService.getPostById(postId, "CommentService > createComment");
 
-        CommentEntity comment = CommentEntity.create(post, user, content, null);
+        UUID parentId = request.getParentId();
+        UUID targetId = request.getTargetId();
+
+        CommentEntity parentCommentEntity = null;
+        CommentEntity targetCommentEntity = null;
+
+        // 1. parentId가 있을 경우 → 부모 댓글 조회
+        if (parentId != null) {
+            parentCommentEntity = this.commentRepository.findById(parentId)
+                .orElseThrow(() -> new CommentException.NotFound("부모 댓글을 찾을 수 없음", parentId));
+        }
+
+        // 2. targetId가 있을 경우 → 대상 댓글 조회
+        if (targetId != null) {
+            targetCommentEntity = this.commentRepository.findById(targetId)
+                .orElseThrow(() -> new CommentException.NotFound("대상 댓글을 찾을 수 없음", targetId));
+        }
+
+        // 3. 검증 로직
+        if (parentId == null && targetId != null) {
+            throw new CommonException.BadRequest("CommentService > createComment", "잘못된 요청: parentId 없이 %s 존재할 수 없음", targetId.toString());
+        }
+
+        CommentEntity comment = CommentEntity.create(postEntity, userEntity, request.getContent(), parentCommentEntity, targetCommentEntity);
         commentRepository.save(comment);
 
         return MutationResponse.of(true);
@@ -173,21 +197,6 @@ public class CommentService {
         }
 
         comment.softDelete();
-
-        return MutationResponse.of(true);
-    }
-
-    /**
-     * 답글 생성
-     */
-    @Transactional
-    public MutationResponse createRecomment(UUID userId, String content, UUID parentId) {
-        CommentEntity parent = this.getFindById(parentId, "CommentService > createRecomment");
-
-        UserEntity user = this.userService.getUserById(userId, "CommentService > createRecomment");
-
-        CommentEntity recomment = CommentEntity.create(parent.getPost(), user, content, parent);
-        commentRepository.save(recomment);
 
         return MutationResponse.of(true);
     }

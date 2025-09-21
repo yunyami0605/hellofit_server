@@ -6,6 +6,7 @@ import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.util.ArrayList;
@@ -42,13 +43,18 @@ public class CommentEntity extends SoftDeletableEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    public static CommentEntity create(PostEntity post, UserEntity user, String content, CommentEntity parent) {
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "target_id", columnDefinition = "CHAR(36)")
+    private CommentEntity target;   // 내가 답글을 단 대상 댓글
+
+    public static CommentEntity create(PostEntity post, UserEntity user, String content, CommentEntity parent, CommentEntity target) {
 
         CommentEntity comment = new CommentEntity();
         comment.post = post;
         comment.user = user;
         comment.content = content;
         comment.parent = parent;
+        comment.target = target;
 
         // 연관관계 편의 메서드 호출
         post.addComment(comment);

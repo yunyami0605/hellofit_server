@@ -1,8 +1,5 @@
 package com.hellofit.hellofit_server.post.dto;
 
-import com.hellofit.hellofit_server.image.ImageEntity;
-import com.hellofit.hellofit_server.post.PostEntity;
-import com.hellofit.hellofit_server.user.UserEntity;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
