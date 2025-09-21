@@ -25,8 +25,19 @@ public class CommentResponseDto {
         private LocalDateTime deletedAt;
         private UserMappingResponseDto.Summary author;
         private Integer likeCount;
+        private String targetNickname;
 
         public static CommentResponseDto.Summary from(CommentEntity comment, int likeCount) {
+
+            String targetNickname = null;
+
+            if (comment.getTarget() != null) {
+                targetNickname = comment.getTarget()
+                    .getUser()
+                    .getNickname();
+            }
+
+
             return Summary.builder()
                 .id(comment.getId())
                 .postId(comment.getPost()
@@ -39,6 +50,7 @@ public class CommentResponseDto {
                 .deletedAt(comment.getDeletedAt())
                 .author(UserMappingResponseDto.Summary.fromEntity(comment.getUser()))
                 .likeCount(likeCount)
+                .targetNickname(targetNickname)
                 .build();
         }
 
