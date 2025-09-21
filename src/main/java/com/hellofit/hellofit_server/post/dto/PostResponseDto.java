@@ -23,9 +23,12 @@ public class PostResponseDto {
         private UserMappingResponseDto.Summary author;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        private Integer commentCount;
+        private Integer likeCount;
         private Integer viewCount;
 
-        public static Summary from(PostEntity post, List<String> images) {
+
+        public static Summary from(PostEntity post, List<String> images, Integer commentCount, Integer likeCount) {
             return Summary.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -35,6 +38,8 @@ public class PostResponseDto {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .viewCount(post.getViewCount())
+                .commentCount(commentCount)
+                .likeCount(likeCount)
                 .build();
         }
     }
@@ -49,6 +54,7 @@ public class PostResponseDto {
         private String title;
         private String content;
         private UUID id;
+        private Integer commentCount;
         private Integer likeCount;
         private Integer viewCount;
         private List<String> images;
@@ -56,7 +62,7 @@ public class PostResponseDto {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
-        public static SummaryList from(PostEntity post, List<String> images, int likeCount) {
+        public static SummaryList from(PostEntity post, List<String> images, Integer likeCount, Integer commentCount) {
             return SummaryList.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -66,6 +72,7 @@ public class PostResponseDto {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .likeCount(likeCount)
+                .commentCount(commentCount)
                 .viewCount(post.getViewCount())
                 .build();
         }

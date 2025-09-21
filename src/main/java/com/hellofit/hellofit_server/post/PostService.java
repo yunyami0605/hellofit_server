@@ -1,11 +1,11 @@
 package com.hellofit.hellofit_server.post;
 
 import com.hellofit.hellofit_server.aws.AwsService;
+import com.hellofit.hellofit_server.comment.CommentRepository;
 import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.exception.CommonException;
 import com.hellofit.hellofit_server.image.ImageEntity;
-import com.hellofit.hellofit_server.image.ImageRepository;
 import com.hellofit.hellofit_server.image.ImageService;
 import com.hellofit.hellofit_server.image.ImageTargetType;
 import com.hellofit.hellofit_server.image.dto.ImageResponseDto;
@@ -37,12 +37,12 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class PostService {
 
-    private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final AwsService awsService;
     private final ImageService imageService;
     private final UserService userService;
-    private final ImageRepository imageRepository;
+    private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
 
     // 유저 본인 게시글 목록 조회
 
@@ -84,11 +84,13 @@ public class PostService {
                         )
                         .toList();
 
-                    int likeCount = likeRepository.countByTargetTypeAndTargetId(
+                    Integer likeCount = likeRepository.countByTargetTypeAndTargetId(
                         LikeTargetType.POST, _posts.getId()
                     );
 
-                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount);
+                    Integer commentCount = commentRepository.countByPostId(_posts.getId());
+
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount);
                 }
             )
             .toList();
@@ -140,11 +142,13 @@ public class PostService {
                         )
                         .toList();
 
-                    int likeCount = likeRepository.countByTargetTypeAndTargetId(
+                    Integer likeCount = likeRepository.countByTargetTypeAndTargetId(
                         LikeTargetType.POST, _posts.getId()
                     );
 
-                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount);
+                    Integer commentCount = commentRepository.countByPostId(_posts.getId());
+
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount);
                 }
             )
             .toList();
@@ -188,8 +192,11 @@ public class PostService {
             )
             .toList();
 
+        Integer commentCount = this.commentRepository.countByPostId(id);
+        Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, id);
 
-        return PostResponseDto.Summary.from(postEntity, presignedGetKey);
+
+        return PostResponseDto.Summary.from(postEntity, presignedGetKey, commentCount, likeCount);
     }
 
     /**
@@ -210,12 +217,16 @@ public class PostService {
 
         return posts.stream()
             .map(post -> {
-                List<String> presignedImages = imageService.getImages(ImageTargetType.POST, post.getId())
+                UUID _postId = post.getId();
+                List<String> presignedImages = imageService.getImages(ImageTargetType.POST, _postId)
                     .stream()
                     .map(img -> awsService.presignedGetUrl(img.getObjectKey()))
                     .toList();
 
-                return PostResponseDto.Summary.from(post, presignedImages);
+                Integer commentCount = this.commentRepository.countByPostId(_postId);
+                Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, _postId);
+
+                return PostResponseDto.Summary.from(post, presignedImages, commentCount, likeCount);
             })
             .toList();
     }
