@@ -59,4 +59,5 @@ public interface CommentRepository extends JpaRepository<CommentEntity, UUID> {
         Pageable pageable
     );
 
+    Integer countByPostId(UUID postId);
 }
