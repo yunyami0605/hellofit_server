@@ -90,7 +90,18 @@ public class PostService {
 
                     Integer commentCount = commentRepository.countByPostId(_posts.getId());
 
-                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount);
+                    List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _posts.getUser()
+                            .getId())
+                        .stream()
+                        .map((v) -> {
+                            return awsService.presignedGetUrl(v.getObjectKey());
+                        })
+                        .toList();
+
+                    String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount, authorImage);
                 }
             )
             .toList();
@@ -148,7 +159,17 @@ public class PostService {
 
                     Integer commentCount = commentRepository.countByPostId(_posts.getId());
 
-                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount);
+                    List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _posts.getUser()
+                            .getId())
+                        .stream()
+                        .map((v) -> {
+                            return awsService.presignedGetUrl(v.getObjectKey());
+                        })
+                        .toList();
+
+                    String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+                    return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount, authorImage);
                 }
             )
             .toList();
@@ -195,8 +216,18 @@ public class PostService {
         Integer commentCount = this.commentRepository.countByPostId(id);
         Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, id);
 
+        List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, postEntity.getUser()
+                .getId())
+            .stream()
+            .map((v) -> {
+                return awsService.presignedGetUrl(v.getObjectKey());
+            })
+            .toList();
 
-        return PostResponseDto.Summary.from(postEntity, presignedGetKey, commentCount, likeCount);
+        String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+
+        return PostResponseDto.Summary.from(postEntity, presignedGetKey, commentCount, likeCount, authorImage);
     }
 
     /**
@@ -216,8 +247,8 @@ public class PostService {
         }
 
         return posts.stream()
-            .map(post -> {
-                UUID _postId = post.getId();
+            .map(_post -> {
+                UUID _postId = _post.getId();
                 List<String> presignedImages = imageService.getImages(ImageTargetType.POST, _postId)
                     .stream()
                     .map(img -> awsService.presignedGetUrl(img.getObjectKey()))
@@ -226,7 +257,17 @@ public class PostService {
                 Integer commentCount = this.commentRepository.countByPostId(_postId);
                 Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, _postId);
 
-                return PostResponseDto.Summary.from(post, presignedImages, commentCount, likeCount);
+                List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _post.getUser()
+                        .getId())
+                    .stream()
+                    .map((v) -> {
+                        return awsService.presignedGetUrl(v.getObjectKey());
+                    })
+                    .toList();
+
+                String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+                return PostResponseDto.Summary.from(_post, presignedImages, commentCount, likeCount, authorImage);
             })
             .toList();
     }

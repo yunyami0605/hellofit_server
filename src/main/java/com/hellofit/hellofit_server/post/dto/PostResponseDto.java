@@ -20,7 +20,7 @@ public class PostResponseDto {
         private String content;
         private UUID id;
         private List<String> images;
-        private UserMappingResponseDto.Summary author;
+        private UserMappingResponseDto.AuthorInfo author;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private Integer commentCount;
@@ -28,12 +28,12 @@ public class PostResponseDto {
         private Integer viewCount;
 
 
-        public static Summary from(PostEntity post, List<String> images, Integer commentCount, Integer likeCount) {
+        public static Summary from(PostEntity post, List<String> images, Integer commentCount, Integer likeCount, String authorImageUrl) {
             return Summary.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .author(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
+                .author(UserMappingResponseDto.AuthorInfo.fromEntity(post.getUser(), authorImageUrl))
                 .images(images)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
@@ -58,16 +58,16 @@ public class PostResponseDto {
         private Integer likeCount;
         private Integer viewCount;
         private List<String> images;
-        private UserMappingResponseDto.Summary author;
+        private UserMappingResponseDto.AuthorInfo author;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
-        public static SummaryList from(PostEntity post, List<String> images, Integer likeCount, Integer commentCount) {
+        public static SummaryList from(PostEntity post, List<String> images, Integer likeCount, Integer commentCount, String authorImageUrl) {
             return SummaryList.builder()
                 .id(post.getId())
                 .title(post.getTitle())
                 .content(post.getContent())
-                .author(UserMappingResponseDto.Summary.fromEntity(post.getUser()))
+                .author(UserMappingResponseDto.AuthorInfo.fromEntity(post.getUser(), authorImageUrl))
                 .images(images)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

@@ -5,5 +5,5 @@ package com.hellofit.hellofit_server.image;
  */
 public enum ImageTargetType {
     POST,
-    COMMENT
+    UserProfile
 }
