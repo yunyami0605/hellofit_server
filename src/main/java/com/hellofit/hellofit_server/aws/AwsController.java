@@ -18,9 +18,9 @@ public class AwsController {
     private final AwsService awsService;
 
     @PostMapping("/presigned")
-    public ResponseEntity<AwsResponseDto.GetS3PresignedPatchUrl> getPresignedUrl(@RequestBody AwsRequestDto.GetS3PresignedBody request){
+    public ResponseEntity<AwsResponseDto.GetS3PresignedPatchUrl> getPresignedUrl(@RequestBody AwsRequestDto.GetS3PresignedBody request) {
 
-        return ResponseEntity.ok(awsService.generatePresignedUrl(request.getFileName(), request.getFileType()));
+        return ResponseEntity.ok(awsService.generatePresignedUrl(request.getFileType()));
     }
 
 

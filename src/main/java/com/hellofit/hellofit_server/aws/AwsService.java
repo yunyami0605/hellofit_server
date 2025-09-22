@@ -27,8 +27,8 @@ public class AwsService {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
 
-    public AwsResponseDto.GetS3PresignedPatchUrl generatePresignedUrl(String originalFileName, String contentType) {
-        String key = "uploads/" + UUID.randomUUID() + "_" + originalFileName;
+    public AwsResponseDto.GetS3PresignedPatchUrl generatePresignedUrl(String contentType) {
+        String key = "uploads/" + UUID.randomUUID();
 
         // 1. PUT Presigned URL 생성 (업로드용)
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()

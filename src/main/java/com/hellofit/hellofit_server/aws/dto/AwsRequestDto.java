@@ -10,12 +10,10 @@ public class AwsRequestDto {
 
     @Getter
     @Builder
-    @AllArgsConstructor @NoArgsConstructor
+    @AllArgsConstructor
+    @NoArgsConstructor
     @Schema(description = "s3 signed url 제공 api")
-    public static class GetS3PresignedBody{
-        @Schema(description = "업로드할 파일명", example = "profile.png")
-        private String fileName;
-
+    public static class GetS3PresignedBody {
         @Schema(description = "업로드 파일 타입", example = "image/png")
         private String fileType;
     }
