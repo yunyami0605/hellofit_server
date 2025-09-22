@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 
 public class UserMappingResponseDto {
@@ -18,9 +19,9 @@ public class UserMappingResponseDto {
 
         public static Summary fromEntity(UserEntity userEntity) {
             return Summary.builder()
-                    .id(userEntity.getId())
-                    .nickname(userEntity.getNickname())
-                    .build();
+                .id(userEntity.getId())
+                .nickname(userEntity.getNickname())
+                .build();
         }
     }
 
@@ -28,17 +29,35 @@ public class UserMappingResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class Detail{
+    public static class Detail {
         private UUID id;
         private String nickname;
         private String email;
 
         public static Detail fromEntity(UserEntity userEntity) {
             return Detail.builder()
-                    .id(userEntity.getId())
-                    .nickname(userEntity.getNickname())
-                    .build();
+                .id(userEntity.getId())
+                .nickname(userEntity.getNickname())
+                .build();
         }
 
+    }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AuthorInfo {
+        private UUID id;
+        private String nickname;
+        private String imageUrl;
+
+        public static AuthorInfo fromEntity(UserEntity userEntity, String imageUrl) {
+            return AuthorInfo.builder()
+                .id(userEntity.getId())
+                .nickname(userEntity.getNickname())
+                .imageUrl(imageUrl)
+                .build();
+        }
     }
 }

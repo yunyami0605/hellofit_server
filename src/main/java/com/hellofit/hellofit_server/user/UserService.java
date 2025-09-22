@@ -4,6 +4,9 @@ import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
 import com.hellofit.hellofit_server.comment.CommentEntity;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.dto.PageResponse;
+import com.hellofit.hellofit_server.image.ImageEntity;
+import com.hellofit.hellofit_server.image.ImageService;
+import com.hellofit.hellofit_server.image.ImageTargetType;
 import com.hellofit.hellofit_server.user.dto.CreateUserRequestDto;
 import com.hellofit.hellofit_server.user.dto.UpdateUserRequestDto;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
@@ -16,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -26,6 +30,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ImageService imageService;
 
 
     /*
@@ -82,12 +87,29 @@ public class UserService {
         // 1. 유저 id 조회
         UserEntity userEntity = this.getUserById(id, "updateUser");
 
-
         // 2. : 닉네임 중복 체크
-        this.checkDuplicateNickname(request.getNickname(), "");
+        if (!userEntity.getNickname()
+            .equals(request.getNickname())) {
+            this.checkDuplicateNickname(request.getNickname(), "");
+        }
 
         // 2-1. 닉네임 변경
         userEntity.changeNickname(request.getNickname());
+
+
+        if (request.getProfileImageKey() != null) {
+            // 3. 프로필 이미지 변경
+            List<ImageEntity> profileImages = this.imageService.getImages(ImageTargetType.UserProfile, id);
+
+            if (!profileImages.isEmpty()) {
+                ImageEntity profile = profileImages.get(0);
+                this.imageService.deleteImage(profile.getId());
+            }
+
+            this.imageService.createImage(request.getProfileImageKey(), ImageTargetType.UserProfile, id, 0);
+
+        }
+
 
         // 4. 변경된 사항 다시 저장 후 id 반환
         return MutationResponse.of(true);
