@@ -1,11 +1,14 @@
 package com.hellofit.hellofit_server.comment;
 
+import com.hellofit.hellofit_server.aws.AwsService;
 import com.hellofit.hellofit_server.comment.dto.CommentRequestDto;
 import com.hellofit.hellofit_server.comment.dto.CommentResponseDto;
 import com.hellofit.hellofit_server.comment.exception.CommentException;
 import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.exception.CommonException;
+import com.hellofit.hellofit_server.image.ImageService;
+import com.hellofit.hellofit_server.image.ImageTargetType;
 import com.hellofit.hellofit_server.like.LikeRepository;
 import com.hellofit.hellofit_server.like.LikeTargetType;
 import com.hellofit.hellofit_server.post.PostEntity;
@@ -32,6 +35,8 @@ public class CommentService {
     private final LikeRepository likeRepository;
     private final PostService postService;
     private final UserService userService;
+    private final ImageService imageService;
+    private final AwsService awsService;
 
     /**
      * 댓글만 조회 (커서방식)
@@ -55,7 +60,19 @@ public class CommentService {
 
         // 5. DTO 변환
         List<CommentResponseDto.Summary> items = resizedComments.stream()
-            .map(comment -> CommentResponseDto.Summary.from(comment, likeCounts.getOrDefault(comment.getId(), 0)))
+            .map(_comment -> {
+                List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _comment.getUser()
+                        .getId())
+                    .stream()
+                    .map((v) -> {
+                        return awsService.presignedGetUrl(v.getObjectKey());
+                    })
+                    .toList();
+
+                String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+                return CommentResponseDto.Summary.from(_comment, likeCounts.getOrDefault(_comment.getId(), 0), authorImage);
+            })
             .toList();
 
         // 6. nextCursor 설정
@@ -85,7 +102,20 @@ public class CommentService {
         Map<UUID, Integer> likeCounts = getLikeCountsForComments(resizedRecomments);
 
         List<CommentResponseDto.Summary> items = resizedRecomments.stream()
-            .map(comment -> CommentResponseDto.Summary.from(comment, likeCounts.getOrDefault(comment.getId(), 0)))
+            .map(_comment -> {
+                List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _comment.getUser()
+                        .getId())
+                    .stream()
+                    .map((v) -> {
+                        return awsService.presignedGetUrl(v.getObjectKey());
+                    })
+                    .toList();
+
+                String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+                return CommentResponseDto.Summary.from(_comment, likeCounts.getOrDefault(_comment.getId(), 0), authorImage);
+
+            })
             .toList();
 
         String nextCursor = items.isEmpty() ? null : items.get(items.size() - 1)
@@ -114,7 +144,18 @@ public class CommentService {
         Map<UUID, Integer> likeCounts = getLikeCountsForComments(resizedComments);
 
         List<CommentResponseDto.Summary> items = resizedComments.stream()
-            .map(comment -> CommentResponseDto.Summary.from(comment, likeCounts.getOrDefault(comment.getId(), 0)))
+            .map(_comment -> {
+                List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _comment.getUser()
+                        .getId())
+                    .stream()
+                    .map((v) -> {
+                        return awsService.presignedGetUrl(v.getObjectKey());
+                    })
+                    .toList();
+
+                String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+                return CommentResponseDto.Summary.from(_comment, likeCounts.getOrDefault(_comment.getId(), 0), authorImage);
+            })
             .toList();
 
         String nextCursor = items.isEmpty() ? null : items.get(items.size() - 1)

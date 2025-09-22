@@ -23,11 +23,12 @@ public class CommentResponseDto {
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime deletedAt;
-        private UserMappingResponseDto.Summary author;
+        private UserMappingResponseDto.AuthorInfo author;
         private Integer likeCount;
         private String targetNickname;
+        private Integer recommentCount;
 
-        public static CommentResponseDto.Summary from(CommentEntity comment, int likeCount) {
+        public static CommentResponseDto.Summary from(CommentEntity comment, int likeCount, String authorImageUrl) {
 
             String targetNickname = null;
 
@@ -48,7 +49,9 @@ public class CommentResponseDto {
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
                 .deletedAt(comment.getDeletedAt())
-                .author(UserMappingResponseDto.Summary.fromEntity(comment.getUser()))
+                .recommentCount(comment.getRecomments()
+                    .size())
+                .author(UserMappingResponseDto.AuthorInfo.fromEntity(comment.getUser(), authorImageUrl))
                 .likeCount(likeCount)
                 .targetNickname(targetNickname)
                 .build();
