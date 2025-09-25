@@ -17,6 +17,7 @@ import com.hellofit.hellofit_server.post.exception.PostException;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.stream.IntStream;
 /**
  * 게시글 서비스 로직
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -107,11 +109,11 @@ public class PostService {
             .toList();
 
         // 5. items가 빈 배열이면 nextCursor = null, 아니면 마지막 cursorId 설정
-        String nextCursor = items.isEmpty()
-            ? null
-            : items.get(items.size() - 1)
+        String nextCursor = (hasNext && !items.isEmpty())
+            ? items.get(items.size() - 1)
             .getCreatedAt()
-            .toString();
+            .toString()
+            : null;
 
         // 6. cursor 응답 형성 후 반환
         return CursorResponse.<PostResponseDto.SummaryList>builder()
@@ -175,11 +177,11 @@ public class PostService {
             .toList();
 
         // 5. nextCursor 추가
-        String nextCursor = items.isEmpty()
-            ? null
-            : items.get(items.size() - 1)
+        String nextCursor = (hasNext && !items.isEmpty())
+            ? items.get(items.size() - 1)
             .getCreatedAt()
-            .toString();
+            .toString()
+            : null;
 
         return CursorResponse.<PostResponseDto.SummaryList>builder()
             .nextCursor(nextCursor)
@@ -291,7 +293,10 @@ public class PostService {
             request.getContent()
         );
 
-        // 3. 이미지 생성 후, 게시글 연결
+        // 3. 저장
+        postRepository.save(post);
+
+        // 4. 이미지 생성 후, 게시글 연결
         IntStream.range(0, request.getImageKeys()
                 .size())
             .forEach((i) -> {
@@ -301,8 +306,6 @@ public class PostService {
                 this.imageService.createImage(key, ImageTargetType.POST, post.getId(), i);
             });
 
-        // 4. 저장
-        postRepository.save(post);
 
         return MutationResponse.builder()
             .success(true)
