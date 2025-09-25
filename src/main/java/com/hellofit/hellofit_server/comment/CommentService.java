@@ -7,6 +7,7 @@ import com.hellofit.hellofit_server.comment.exception.CommentException;
 import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.global.exception.CommonException;
+import com.hellofit.hellofit_server.image.ImageEntity;
 import com.hellofit.hellofit_server.image.ImageService;
 import com.hellofit.hellofit_server.image.ImageTargetType;
 import com.hellofit.hellofit_server.like.LikeRepository;
@@ -76,9 +77,11 @@ public class CommentService {
             .toList();
 
         // 6. nextCursor 설정
-        String nextCursor = items.isEmpty() ? null : items.get(items.size() - 1)
+        String nextCursor = (hasNext && !items.isEmpty())
+            ? items.get(items.size() - 1)
             .getCreatedAt()
-            .toString();
+            .toString()
+            : null;
 
         return CursorResponse.<CommentResponseDto.Summary>builder()
             .items(items)
@@ -118,9 +121,11 @@ public class CommentService {
             })
             .toList();
 
-        String nextCursor = items.isEmpty() ? null : items.get(items.size() - 1)
+        String nextCursor = (hasNext && !items.isEmpty())
+            ? items.get(items.size() - 1)
             .getCreatedAt()
-            .toString();
+            .toString()
+            : null;
 
         return CursorResponse.<CommentResponseDto.Summary>builder()
             .items(items)
@@ -158,9 +163,11 @@ public class CommentService {
             })
             .toList();
 
-        String nextCursor = items.isEmpty() ? null : items.get(items.size() - 1)
+        String nextCursor = (hasNext && !items.isEmpty())
+            ? items.get(items.size() - 1)
             .getCreatedAt()
-            .toString();
+            .toString()
+            : null;
 
         return CursorResponse.<CommentResponseDto.Summary>builder()
             .items(items)
@@ -210,7 +217,7 @@ public class CommentService {
      * 댓글 수정
      */
     @Transactional
-    public MutationResponse updateComment(UUID commentId, String content, UUID userId) {
+    public CommentResponseDto.Summary updateComment(UUID commentId, String content, UUID userId) {
         CommentEntity comment = this.getFindById(commentId, "CommentService > updateComment");
 
         if (!comment.getUser()
@@ -221,7 +228,17 @@ public class CommentService {
 
         comment.changeContent(content);
 
-        return MutationResponse.of(true);
+        List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, comment.getUser()
+                .getId())
+            .stream()
+            .map((v) -> {
+                return awsService.presignedGetUrl(v.getObjectKey());
+            })
+            .toList();
+
+        String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+        return CommentResponseDto.Summary.from(comment, 0, authorImage);
     }
 
     /**
