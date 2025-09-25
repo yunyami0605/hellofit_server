@@ -29,4 +29,14 @@ public class CommentRequestDto {
             nullable = true)
         private UUID targetId;
     }
+
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(name = "CommentUpdateRequest", description = "댓글/답글 수정 요청 DTO")
+    public static class Update {
+        @Schema(description = "댓글/답글 내용", example = "댓글 내용입니다.")
+        @NotBlank(message = "내용은 필수 입력값입니다.")
+        private String content;
+    }
 }

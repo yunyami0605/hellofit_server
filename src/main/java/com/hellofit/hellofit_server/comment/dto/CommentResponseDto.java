@@ -56,6 +56,6 @@ public class CommentResponseDto {
                 .targetNickname(targetNickname)
                 .build();
         }
-
     }
+
 }

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,6 +71,7 @@ public class CommentController {
     @Operation(summary = "댓글/답글 생성")
     @ApiResponse(responseCode = "200", description = "댓글/답글 생성 성공")
     @PostMapping("/posts/{postId}/comments")
+    @ResponseStatus(HttpStatus.CREATED)
     public MutationResponse createComment(
         @AuthenticationPrincipal UUID userId,
         @PathVariable UUID postId,
@@ -84,10 +86,10 @@ public class CommentController {
     @Operation(summary = "댓글/답글 수정")
     @ApiResponse(responseCode = "200", description = "댓글/답글 수정 성공")
     @PatchMapping("/comments/{commentId}")
-    public MutationResponse updateComment(
+    public CommentResponseDto.Summary updateComment(
         @AuthenticationPrincipal UUID userId,
         @PathVariable UUID commentId,
-        @RequestBody CommentRequestDto.Create request
+        @RequestBody CommentRequestDto.Update request
     ) {
         return commentService.updateComment(commentId, request.getContent(), userId);
     }
