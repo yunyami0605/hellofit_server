@@ -35,6 +35,11 @@ spring:
         validate-on-migrate: true
         locations: classpath:db/migration
 
+    servlet:
+        multipart:
+            max-file-size: 50MB      # 단일 파일 최대 크기
+            max-request-size: 50MB   # 요청 전체 크기
+
 server:
     port: 8084
     servlet:
