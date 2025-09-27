@@ -15,4 +15,11 @@ public interface DietRecommendationRepository extends JpaRepository<DietRecommen
 
     // 특정 유저의 전체 추천 조회 (최신순)
     List<DietRecommendationEntity> findByUserOrderByRecommendedDateDesc(UserEntity user);
+
+    // 특정 유저의 오늘 포함 3일치 추천 조회 (날짜 오름차순)
+    List<DietRecommendationEntity> findByUserAndRecommendedDateBetweenOrderByRecommendedDateAsc(
+        UserEntity user,
+        LocalDate startDate,
+        LocalDate endDate
+    );
 }
