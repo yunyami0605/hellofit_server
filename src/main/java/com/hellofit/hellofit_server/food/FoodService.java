@@ -1,8 +1,11 @@
 package com.hellofit.hellofit_server.food;
 
+import com.hellofit.hellofit_server.food.dto.FoodResponseDto;
+import com.hellofit.hellofit_server.global.dto.CursorResponse;
 import com.opencsv.CSVReader;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,6 +13,7 @@ import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -59,6 +63,34 @@ public class FoodService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public CursorResponse<FoodResponseDto.Summary> searchFoods(String keyword, UUID cursorId, int size) {
+        Pageable pageable = PageRequest.of(0, size + 1);
+
+        List<FoodEntity> foods;
+        if (cursorId == null) {
+            foods = foodRepository.findFirstPage(keyword, pageable);
+        } else {
+            foods = foodRepository.findByCursor(keyword, cursorId, pageable);
+        }
+
+        boolean hasNext = foods.size() > size;
+        List<FoodEntity> resizedFoods = hasNext ? foods.subList(0, size) : foods;
+
+        String nextCursor = hasNext ? resizedFoods.get(resizedFoods.size() - 1)
+            .getId()
+            .toString() : null;
+
+        List<FoodResponseDto.Summary> result = resizedFoods.stream()
+            .map(FoodResponseDto.Summary::fromEntity)
+            .toList();
+
+        return CursorResponse.<FoodResponseDto.Summary>builder()
+            .items(result)
+            .nextCursor(nextCursor)
+            .hasNext(hasNext)
+            .build();
     }
 
 }
