@@ -42,8 +42,8 @@ public class UserEntity extends SoftDeletableEntity {
     private UUID socialId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "login_provider", length = 20)
-    private LoginProvider loginProvider;
+    @Column(name = "provider", length = 20)
+    private LoginProvider provider;
     /**
      * 1:1 Refresh Token
      */
@@ -73,7 +73,7 @@ public class UserEntity extends SoftDeletableEntity {
         user.password = encodedPassword;
         user.nickname = nickname;
         user.isPrivacyAgree = isPrivacyAgree;
-        user.loginProvider = LoginProvider.LOCAL;
+        user.provider = LoginProvider.LOCAL;
         return user;
     }
 
@@ -85,7 +85,7 @@ public class UserEntity extends SoftDeletableEntity {
         user.nickname = nickname;
         user.isPrivacyAgree = isPrivacyAgree;
         user.socialId = socialId;
-        user.loginProvider = provider;
+        user.provider = provider;
         return user;
     }
 

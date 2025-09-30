@@ -127,7 +127,7 @@ public class AuthService {
                     socialClient.getKakaoUser(kakaoToken.getAccessToken());
 
                 // 3. DB 조회
-                userEntity = userRepository.findBySocialIdAndLoginProvider(
+                userEntity = userRepository.findBySocialIdAndProvider(
                         String.valueOf(kakaoUser.getId()), // Long → String 변환
                         LoginProvider.KAKAO
                     )

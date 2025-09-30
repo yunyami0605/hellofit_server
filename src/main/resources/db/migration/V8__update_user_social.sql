@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN social_id CHAR(36) UNIQUE NULL,
+    ADD COLUMN provider VARCHAR(20) NULL;
+
