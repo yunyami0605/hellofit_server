@@ -48,7 +48,7 @@ public class UserService {
         String encryptedPassword = passwordEncoder.encode(request.getPassword());
 
         // 4. 유저 정보 생성
-        UserEntity userEntity = UserEntity.create(
+        UserEntity userEntity = UserEntity.createEmail(
             request.getEmail(),
             encryptedPassword,
             request.getNickname(),
@@ -152,12 +152,4 @@ public class UserService {
         }
     }
 
-    /**
-     * 유저 존재 여부 -> 없으면 not found 반환
-     */
-    public void checkUserExists(UUID userId, String errorPoint) {
-        if (!userRepository.existsById(userId)) {
-            throw new UserException.UserNotFoundException(errorPoint, userId);
-        }
-    }
 }

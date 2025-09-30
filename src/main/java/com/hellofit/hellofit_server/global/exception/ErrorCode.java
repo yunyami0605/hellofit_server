@@ -45,6 +45,9 @@ public enum ErrorCode {
     USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.USER_PROFILE_NOT_FOUND),
 
     // ===== Auth 관련 =====
+    @Schema(description = ErrorMessage.UNSUPPORTED_SOCIAL_PROVIDER)
+    UNSUPPORTED_SOCIAL_PROVIDER(HttpStatus.BAD_REQUEST, ErrorMessage.UNSUPPORTED_SOCIAL_PROVIDER),
+
     @Schema(description = ErrorMessage.UNAUTHORIZED)
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, ErrorMessage.UNAUTHORIZED),
 
@@ -73,6 +76,19 @@ public enum ErrorCode {
     // 댓글을 찾을 수 없는 경우
     @Schema(description = ErrorMessage.COMMENT_NOT_FOUND)
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, ErrorMessage.COMMENT_NOT_FOUND),
+
+    // ===== Kakao 인증 요청 관련 ====
+    @Schema(description = ErrorMessage.KAKAO_USERINFO_REQUEST_FAIL)
+    KAKAO_USERINFO_REQUEST_FAIL(HttpStatus.BAD_GATEWAY, ErrorMessage.KAKAO_USERINFO_REQUEST_FAIL),
+
+    @Schema(description = ErrorMessage.KAKAO_API_UNAVAILABLE)
+    KAKAO_API_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, ErrorMessage.KAKAO_API_UNAVAILABLE),
+
+    @Schema(description = ErrorMessage.KAKAO_AUTH_FAIL)
+    KAKAO_AUTH_FAIL(HttpStatus.UNAUTHORIZED, ErrorMessage.KAKAO_AUTH_FAIL),
+
+    @Schema(description = ErrorMessage.KAKAO_SERVER_ERROR)
+    KAKAO_SERVER_ERROR(HttpStatus.BAD_GATEWAY, ErrorMessage.KAKAO_SERVER_ERROR),
 
     // ===== Image 관련 =====
     // 이미지를 찾을 수 없는 겨우

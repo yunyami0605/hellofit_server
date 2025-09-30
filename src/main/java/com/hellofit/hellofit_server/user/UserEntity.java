@@ -5,6 +5,7 @@ import com.hellofit.hellofit_server.comment.CommentEntity;
 import com.hellofit.hellofit_server.global.entity.SoftDeletableEntity;
 import com.hellofit.hellofit_server.like.LikeEntity;
 import com.hellofit.hellofit_server.post.PostEntity;
+import com.hellofit.hellofit_server.user.enums.LoginProvider;
 import com.hellofit.hellofit_server.user.profile.UserProfileEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -23,11 +24,10 @@ import java.util.stream.Collectors;
 public class UserEntity extends SoftDeletableEntity {
 
     @NotBlank
-    @Column(unique = true, nullable = false, length = 255)
+    @Column(unique = true, nullable = false)
     private String email;
 
-    @NotBlank
-    @Column(nullable = false, length = 255)
+    @Column()
     private String password;
 
     @NotBlank
@@ -38,6 +38,12 @@ public class UserEntity extends SoftDeletableEntity {
     @Column(nullable = false)
     private Boolean isPrivacyAgree;
 
+    @Column(name = "social_id", unique = true)
+    private UUID socialId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "login_provider", length = 20)
+    private LoginProvider loginProvider;
     /**
      * 1:1 Refresh Token
      */
@@ -53,20 +59,34 @@ public class UserEntity extends SoftDeletableEntity {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfileEntity profile;
 
+
     /**
      * 1:N Posts
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostEntity> posts = new ArrayList<>();
 
-    public static UserEntity create(String email, String password, String nickname, Boolean isPrivacyAgree) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.email = email;
-        userEntity.password = password;
-        userEntity.nickname = nickname;
-        userEntity.isPrivacyAgree = isPrivacyAgree;
+    // 이메일 회원가입
+    public static UserEntity createEmail(String email, String encodedPassword, String nickname, Boolean isPrivacyAgree) {
+        UserEntity user = new UserEntity();
+        user.email = email;
+        user.password = encodedPassword;
+        user.nickname = nickname;
+        user.isPrivacyAgree = isPrivacyAgree;
+        user.loginProvider = LoginProvider.LOCAL;
+        return user;
+    }
 
-        return userEntity;
+    // 소셜 회원가입
+    public static UserEntity createSocial(String email, String nickname, Boolean isPrivacyAgree, UUID socialId, LoginProvider provider) {
+        UserEntity user = new UserEntity();
+        user.email = email;
+        user.password = null; // 소셜은 password 없음
+        user.nickname = nickname;
+        user.isPrivacyAgree = isPrivacyAgree;
+        user.socialId = socialId;
+        user.loginProvider = provider;
+        return user;
     }
 
     // 게시글 추가

@@ -10,9 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public class BusinessException extends RuntimeException {
     private final ErrorCode code;
-    private final String logMessage; // 로그 메세지
+    private final String logMessage;
 
-    // 에러 발생 값만 표시할 경우
+    // 단순 값만 표시할 때
     public BusinessException(ErrorCode code, String value) {
         super(code.getMessage());
         this.code = code;
@@ -20,7 +20,7 @@ public class BusinessException extends RuntimeException {
         log.warn(this.logMessage);
     }
 
-    // point = 에러 발생 지점
+    // 발생 지점 + 값
     public BusinessException(ErrorCode code, String point, String value) {
         super(code.getMessage());
         this.code = code;
@@ -28,13 +28,21 @@ public class BusinessException extends RuntimeException {
         log.warn(this.logMessage);
     }
 
-    // 로그 포멧 형식이 있을 경우
+    // 포맷팅 로그
     public BusinessException(ErrorCode code, String point, String logFormat, Object... args) {
         super(code.getMessage());
         this.code = code;
         String addLogMessage = String.format(logFormat, args);
         this.logMessage = String.format("[CODE: %s][POINT: %s] = %s", code.getMessage(), point, addLogMessage);
         log.warn(this.logMessage);
+    }
+
+    // Throwable cause 포함
+    public BusinessException(ErrorCode code, String point, String value, Throwable cause) {
+        super(code.getMessage(), cause); // 원인 예외까지 RuntimeException에 전달
+        this.code = code;
+        this.logMessage = String.format("[CODE: %s][POINT: %s] = %s", code.getMessage(), point, value);
+        log.error(this.logMessage, cause); // 원인까지 로그 출력
     }
 
     @Override

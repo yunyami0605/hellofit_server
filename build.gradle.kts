@@ -66,7 +66,7 @@ dependencies {
     implementation("org.flywaydb:flyway-mysql")
 
     implementation("com.opencsv:opencsv:5.9")
-
+    implementation("com.nimbusds:nimbus-jose-jwt:9.37")
 }
 
 tasks.withType<Test> {

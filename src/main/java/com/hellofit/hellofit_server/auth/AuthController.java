@@ -4,7 +4,6 @@ import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
-import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,50 +36,94 @@ public class AuthController {
     private final AuthService authService;
 
     @Operation(
-        summary = "회원가입 API"
+        summary = "이메일 회원가입 API"
     )
     @ApiResponse(
-        responseCode = "200",
+        responseCode = "201",
         description = "가입 성공",
-        content = @Content(schema = @Schema(implementation = MutationResponse.class))
+        content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
     )
     @ApiResponse(responseCode = "409", description = ErrorMessage.DUPLICATE_EMAIL, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     @SecurityRequirements(value = {})
-    @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public LoginResponseDto signup(@RequestBody @Valid SignupRequestDto request, HttpServletResponse response) {
-        return authService.signup(request, response);
+    @PostMapping("/signup")
+    public AuthResponseDto.Access signup(@RequestBody @Valid AuthRequestDto.EmailSignup request, HttpServletResponse response) {
+        return authService.signupByEmail(request, response);
     }
 
     @Operation(
         summary = "이메일 로그인 API"
     )
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "로그인 성공",
-            content = @Content(schema = @Schema(implementation = LoginResponseDto.class))
-        ),
-        @ApiResponse(
-            responseCode = "401",
-            description = "로그인 실패",
-            content = @Content(
-                schema = @Schema(implementation = ApiErrorResponse.class),
-                examples = {
-                    @ExampleObject(
-                        name = ErrorMessage.WRONG_LOGIN_FORM
-                    )
-                }
-            )
-        )
-    })
+    @ApiResponse(
+        responseCode = "200",
+        description = "로그인 성공",
+        content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = ErrorMessage.WRONG_LOGIN_FORM,
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+    )
     @SecurityRequirements(value = {})
     @PostMapping("/login")
-    public LoginResponseDto login(@RequestBody @Valid LoginRequestDto request, HttpServletResponse response) {
-        return authService.login(request, response);
+    public AuthResponseDto.Access loginByEmail(@RequestBody @Valid AuthRequestDto.EmailLogin request, HttpServletResponse response) {
+        return authService.loginByEmail(request, response);
+    }
+
+    @Operation(
+        summary = "소셜 회원가입 API"
+    )
+    @ApiResponse(
+        responseCode = "201",
+        description = "가입 성공",
+        content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = ErrorMessage.DUPLICATE_EMAIL,
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+    )
+    @SecurityRequirements(value = {})
+    @ApiResponse(responseCode = "409", description = ErrorMessage.DUPLICATE_EMAIL, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    public AuthResponseDto.Access signupBySocial(@RequestBody @Valid AuthRequestDto.SocialSignup request, HttpServletResponse response) {
+        return authService.signupBySocial(request, response);
+    }
+
+    @Operation(
+        summary = "소셜 로그인 api"
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "로그인 성공",
+        content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = ErrorMessage.WRONG_LOGIN_FORM,
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+    )
+    @SecurityRequirements(value = {})
+    @PostMapping("/login/social")
+    public AuthResponseDto.Access loginBySocial(AuthRequestDto.SocialLogin request, HttpServletResponse response) {
+        return authService.loginBySocial(request, response);
     }
 
     @Operation(summary = "토큰 갱신 API")
+    @ApiResponse(
+        responseCode = "200",
+        description = "토큰 갱신 성공",
+        content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
+    )
+    @ApiResponse(
+        responseCode = "401-1",
+        description = ErrorMessage.TOKEN_EXPIRED,
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+    )
+    @ApiResponse(
+        responseCode = "401-2",
+        description = ErrorMessage.TOKEN_INVALID,
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+    )
     @PostMapping("/refresh")
     public TokenRefreshResponseDto refreshToken(HttpServletRequest request) {
         return authService.refreshAccessToken(request);
@@ -103,6 +146,11 @@ public class AuthController {
         description = "유저 정보 성공",
         content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))
     )
+    @ApiResponse(
+        responseCode = "404",
+        description = ErrorMessage.USER_NOT_FOUND,
+        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+    )
     @GetMapping("/info")
     public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UUID userId) {
         return authService.getAuthInfo(userId);
@@ -123,7 +171,7 @@ public class AuthController {
     @Operation(summary = "닉네임 중복 체크 API")
     @ApiResponse(
         responseCode = "200",
-        description = "true -> 중복 닉네임",
+        description = "true -> 중복 닉네임, false -> 사용가능",
         content = @Content(schema = @Schema(implementation = AuthResponseDto.NicknameDuplicate.class))
     )
     @GetMapping("/check-nickname")
@@ -131,4 +179,6 @@ public class AuthController {
     public AuthResponseDto.NicknameDuplicate checkNicknameDuplicate(@RequestParam String nickname) {
         return authService.checkNicknameDuplicate(nickname);
     }
+
+
 }

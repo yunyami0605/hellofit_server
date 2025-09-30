@@ -22,6 +22,13 @@ public class ErrorMessage {
     public static final String WRONG_LOGIN_FORM = "아이디 또는 비밀번호가 잘못 되었습니다.";
     public static final String TOKEN_EXPIRED = "토큰이 만료되었습니다.";
     public static final String TOKEN_INVALID = "유효하지 않은 토큰입니다.";
+    public static final String UNSUPPORTED_SOCIAL_PROVIDER = "지원하지 않는 종류의 소셜 로그인입니다.";
+
+    // ===== Kakao 인증 요청 관련 =====
+    public static final String KAKAO_USERINFO_REQUEST_FAIL = "카카오 사용자 정보 요청에 실패했습니다.";
+    public static final String KAKAO_API_UNAVAILABLE = "카카오 서버와 통신할 수 없습니다.";
+    public static final String KAKAO_AUTH_FAIL = "카카오 사용자 인증에 실패했습니다.";
+    public static final String KAKAO_SERVER_ERROR = "카카오 서버에서 오류가 발생했습니다.";
 
     // ===== Post 관련 =====
     public static final String POST_NOT_FOUND = "게시글을 찾을 수 없습니다.";

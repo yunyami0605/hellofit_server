@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.user;
 
+import com.hellofit.hellofit_server.user.enums.LoginProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -14,4 +15,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    Optional<UserEntity> findBySocialIdAndLoginProvider(String socialId, LoginProvider loginProvider);
 }
