@@ -1,5 +1,6 @@
 package com.hellofit.hellofit_server.post;
 
+import com.hellofit.hellofit_server.user.UserEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -41,4 +42,5 @@ public interface PostRepository extends JpaRepository<PostEntity, UUID> {
         "ORDER BY p.createdAt DESC")
     List<PostEntity> findPostsByCursor(@Param("cursor") LocalDateTime cursor, Pageable pageable);
 
+    long countByUser(UserEntity user);
 }

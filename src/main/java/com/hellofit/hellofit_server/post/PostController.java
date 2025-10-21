@@ -55,7 +55,7 @@ public class PostController {
         responseCode = "200",
         description = "유저가 작성한 게시글 목록 조회 성공"
     )
-    @GetMapping("/user")
+    @GetMapping("/me")
     public CursorResponse<PostResponseDto.SummaryList> getPostsByUser(
         @AuthenticationPrincipal UUID userId,
         @RequestParam(required = false) LocalDateTime cursorId,
