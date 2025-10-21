@@ -1,7 +1,6 @@
 package com.hellofit.hellofit_server.comment.dto;
 
 import com.hellofit.hellofit_server.comment.CommentEntity;
-import com.hellofit.hellofit_server.post.dto.PostResponseDto;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import lombok.Builder;
 import lombok.Getter;

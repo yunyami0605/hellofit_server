@@ -1,6 +1,7 @@
 package com.hellofit.hellofit_server.comment;
 
 import com.hellofit.hellofit_server.post.PostEntity;
+import com.hellofit.hellofit_server.user.UserEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -60,4 +61,6 @@ public interface CommentRepository extends JpaRepository<CommentEntity, UUID> {
     );
 
     Integer countByPostId(UUID postId);
+
+    Long countByUser(UserEntity user);
 }
