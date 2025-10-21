@@ -68,4 +68,3 @@ jwt:
 hellofit:
     security:
         pepper: ${password_pepper}
-
