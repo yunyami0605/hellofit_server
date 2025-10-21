@@ -66,7 +66,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "유저 리스트 조회 성공")
     @GetMapping("/list")
     @ResponseStatus(HttpStatus.OK)
-    public PageResponse<UserMappingResponseDto.Detail> getUsersByPage(
+    public PageResponse<UserMappingResponseDto.Summary> getUsersByPage(
         @Parameter(description = "페이징 정보", example = "{ \"page\": 0, \"size\": 10 }")
         Pageable pageable
     ) {

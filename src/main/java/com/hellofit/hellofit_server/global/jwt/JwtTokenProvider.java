@@ -117,4 +117,14 @@ public class JwtTokenProvider {
             return TokenStatus.INVALID;
         }
     }
+
+    public String generateServiceToken() {
+        return Jwts.builder()
+            .setSubject("SERVICE") // userId 대신 SERVICE
+            .claim("role", "SERVICE")
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() + (1000L * 60 * 60))) // 1시간
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
+    }
 }

@@ -72,9 +72,9 @@ public class UserService {
     /*
      * 유저 목록 페이지 조회 서비스 로직
      * */
-    public PageResponse<UserMappingResponseDto.Detail> getUsersByPage(Pageable pageable) {
-        Page<UserMappingResponseDto.Detail> tmp = userRepository.findAll(pageable)
-            .map(UserMappingResponseDto.Detail::fromEntity);
+    public PageResponse<UserMappingResponseDto.Summary> getUsersByPage(Pageable pageable) {
+        Page<UserMappingResponseDto.Summary> tmp = userRepository.findAll(pageable)
+            .map(UserMappingResponseDto.Summary::fromEntity);
 
         return PageResponse.from(tmp);
     }
