@@ -5,8 +5,10 @@ import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.auth.exception.*;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenEntity;
 import com.hellofit.hellofit_server.auth.token.RefreshTokenRepository;
+import com.hellofit.hellofit_server.comment.CommentRepository;
 import com.hellofit.hellofit_server.global.constants.AuthConstant;
 import com.hellofit.hellofit_server.global.jwt.JwtTokenProvider;
+import com.hellofit.hellofit_server.post.PostRepository;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
 import com.hellofit.hellofit_server.user.UserService;
@@ -19,6 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -38,6 +41,8 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final SocialClient socialClient;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     /**
      * [서비스 로직] 이메일 회원가입
@@ -204,10 +209,12 @@ public class AuthService {
     /**
      * [서비스 로직] 본인 유저 정보 조회
      */
-    public UserMappingResponseDto.Summary getAuthInfo(UUID userId) {
+    public UserMappingResponseDto.Detail getAuthInfo(UUID userId) {
         UserEntity user = this.userService.getUserById(userId, "AuthService > getAuthInfo");
+        Long postCount = this.postRepository.countByUser(user);
+        Long commentCount = this.commentRepository.countByUser(user);
 
-        return UserMappingResponseDto.Summary.fromEntity(user);
+        return UserMappingResponseDto.Detail.fromEntity(user, postCount, commentCount);
     }
 
     /**

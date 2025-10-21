@@ -3,14 +3,11 @@ package com.hellofit.hellofit_server.auth;
 import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
-import com.hellofit.hellofit_server.global.dto.MutationResponse;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +16,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +26,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Tag(name = "Auth API", description = "인증/인가 관련 API")
 public class AuthController {
     private final AuthService authService;
@@ -143,7 +138,7 @@ public class AuthController {
     @Operation(summary = "본인 유저 정보 조회 API")
     @ApiResponse(
         responseCode = "200",
-        description = "유저 정보 성공",
+        description = "유저 정보 조회 성공",
         content = @Content(schema = @Schema(implementation = UserMappingResponseDto.Summary.class))
     )
     @ApiResponse(
@@ -151,8 +146,8 @@ public class AuthController {
         description = ErrorMessage.USER_NOT_FOUND,
         content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
     )
-    @GetMapping("/info")
-    public UserMappingResponseDto.Summary authInfo(@AuthenticationPrincipal UUID userId) {
+    @GetMapping("/info/me")
+    public UserMappingResponseDto.Detail authInfo(@AuthenticationPrincipal UUID userId) {
         return authService.getAuthInfo(userId);
     }
 
@@ -179,6 +174,4 @@ public class AuthController {
     public AuthResponseDto.NicknameDuplicate checkNicknameDuplicate(@RequestParam String nickname) {
         return authService.checkNicknameDuplicate(nickname);
     }
-
-
 }

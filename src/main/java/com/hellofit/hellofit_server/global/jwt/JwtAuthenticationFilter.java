@@ -52,12 +52,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             TokenStatus status = jwtTokenProvider.validateToken(token);
+
+            // 2. 토큰 유효한지 확인
             if (status != TokenStatus.VALID) {
                 throw new InsufficientAuthenticationException("Token invalid: " + status);
             }
 
-            UUID userId = jwtTokenProvider.getUserIdFromToken(token);
             String role = jwtTokenProvider.getRoleFromToken(token);
+
+            // 3. 서비스 토큰일 경우, DB 조회 없이 통
+            if ("SERVICE".equals(role)) {
+                UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                        "service-account",
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_SERVICE"))
+                    );
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext()
+                    .setAuthentication(authentication);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // 4. 일반 유저 토큰이면 기존 로직 수행
+            UUID userId = jwtTokenProvider.getUserIdFromToken(token);
 
             UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserException.UserNotFoundException("JwtAuthenticationFilter > doFilterInternal", userId));
