@@ -37,6 +37,7 @@ public class DietLogRequestDto {
         @Getter
         @Setter
         public static class FoodItemDto {
+            private UUID id;
             private String foodName;
         }
     }

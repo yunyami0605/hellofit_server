@@ -49,9 +49,9 @@ public class DietLogService {
     }
 
     @Transactional
-    public DietLogItemEntity addItem(DietLogEntity log, String repFoodName) {
-        FoodEntity food = foodRepository.findFirstByRepFoodName(repFoodName)
-            .orElseThrow(() -> new IllegalArgumentException("해당 음식이 DB에 존재하지 않습니다: " + repFoodName));
+    public DietLogItemEntity addItem(DietLogEntity log, UUID foodId) {
+        FoodEntity food = foodRepository.findById(foodId)
+                                        .orElseThrow(() -> new IllegalArgumentException("해당 음식이 DB에 존재하지 않습니다: " + foodId));
 
         // weight 보정 (100g 기준 → 실제 DB weight 반영)
         double factor = (food.getWeight() != null && food.getWeight() > 0)

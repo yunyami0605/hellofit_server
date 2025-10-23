@@ -59,8 +59,9 @@ public class DietLogController {
         List<DietLogEntity> logs = logService.getLogsInRange(user, startDate, endDate);
 
         List<DietLogResponseDto.Summary> response = logs.stream()
-            .map(DietLogResponseDto.Summary::fromEntity)
-            .toList();
+                                                        .map(DietLogResponseDto.Summary::fromEntity)
+                                                        .toList()
+            ;
 
         return ResponseEntity.ok(response);
     }
@@ -103,14 +104,14 @@ public class DietLogController {
             for (DietLogRequestDto.Create.FoodItemDto itemDto : request.getItems()) {
                 logService.addItem(
                     log,
-                    itemDto.getFoodName()
+                    itemDto.getId()
                 );
             }
         }
 
         return MutationResponse.builder()
-            .success(true)
-            .build();
+                               .success(true)
+                               .build();
     }
 
     // 로그 삭제
@@ -119,6 +120,6 @@ public class DietLogController {
     public ResponseEntity<Void> deleteLog(@PathVariable UUID id) {
         logService.delete(id);
         return ResponseEntity.noContent()
-            .build();
+                             .build();
     }
 }
