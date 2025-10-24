@@ -37,6 +37,9 @@ public enum ErrorCode {
     @Schema(description = ErrorMessage.DUPLICATE_NICKNAME)
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, ErrorMessage.DUPLICATE_NICKNAME),
 
+    @Schema(description = ErrorMessage.DUPLICATE_SOCIAL)
+    DUPLICATE_SOCIAL(HttpStatus.CONFLICT, ErrorMessage.DUPLICATE_SOCIAL),
+
     // ===== USER PROFILE 관련 =====
     @Schema(description = ErrorMessage.USER_PROFILE_DUPLICATE)
     USER_PROFILE_DUPLICATE(HttpStatus.CONFLICT, ErrorMessage.USER_PROFILE_DUPLICATE),

@@ -4,6 +4,7 @@ import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
+import com.hellofit.hellofit_server.user.exception.UserException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -16,9 +17,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -80,12 +83,13 @@ public class AuthController {
     )
     @SecurityRequirements(value = {})
     @ApiResponse(responseCode = "409", description = ErrorMessage.DUPLICATE_EMAIL, content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    @PostMapping("/social/signup")
     public AuthResponseDto.Access signupBySocial(@RequestBody @Valid AuthRequestDto.SocialSignup request, HttpServletResponse response) {
         return authService.signupBySocial(request, response);
     }
 
     @Operation(
-        summary = "소셜 로그인 api"
+        summary = "소셜 로그인 API"
     )
     @ApiResponse(
         responseCode = "200",
@@ -93,14 +97,15 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
     )
     @ApiResponse(
-        responseCode = "401",
-        description = ErrorMessage.WRONG_LOGIN_FORM,
+        responseCode = "404",
+        description = ErrorMessage.USER_NOT_FOUND,
         content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
     )
     @SecurityRequirements(value = {})
     @PostMapping("/login/social")
-    public AuthResponseDto.Access loginBySocial(AuthRequestDto.SocialLogin request, HttpServletResponse response) {
-        return authService.loginBySocial(request, response);
+    public ResponseEntity<?> loginBySocial(@RequestBody @Valid AuthRequestDto.SocialLogin request,
+                                           HttpServletResponse response) {
+        return ResponseEntity.ok(authService.loginBySocial(request, response));
     }
 
     @Operation(summary = "토큰 갱신 API")

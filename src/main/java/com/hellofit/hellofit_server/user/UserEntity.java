@@ -39,7 +39,7 @@ public class UserEntity extends SoftDeletableEntity {
     private Boolean isPrivacyAgree;
 
     @Column(name = "social_id", unique = true)
-    private UUID socialId;
+    private String socialId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider", length = 20)
@@ -78,7 +78,7 @@ public class UserEntity extends SoftDeletableEntity {
     }
 
     // 소셜 회원가입
-    public static UserEntity createSocial(String email, String nickname, Boolean isPrivacyAgree, UUID socialId, LoginProvider provider) {
+    public static UserEntity createSocial(String email, String nickname, Boolean isPrivacyAgree, String socialId, LoginProvider provider) {
         UserEntity user = new UserEntity();
         user.email = email;
         user.password = null; // 소셜은 password 없음
@@ -105,10 +105,10 @@ public class UserEntity extends SoftDeletableEntity {
         if (input == null) return new HashSet<>();
         // 공백 트림, 빈 값 제거, 길이 제한, 중복 제거(Set)
         return input.stream()
-            .map(s -> s == null ? null : s.trim())
-            .filter(s -> s != null && !s.isEmpty())
-            .map(s -> s.length() > 100 ? s.substring(0, 100) : s) // DB length=100 보호
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+                    .map(s -> s == null ? null : s.trim())
+                    .filter(s -> s != null && !s.isEmpty())
+                    .map(s -> s.length() > 100 ? s.substring(0, 100) : s) // DB length=100 보호
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public void changeNickname(String nickname) {

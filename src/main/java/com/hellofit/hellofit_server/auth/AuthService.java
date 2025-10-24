@@ -28,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -78,7 +79,7 @@ public class AuthService {
     public AuthResponseDto.Access loginByEmail(AuthRequestDto.EmailLogin request, HttpServletResponse response) {
         // 1. 이메일로 유저 조회 -> 없으면 에러 반환
         UserEntity userEntity = userRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new AuthException.WrongLoginForm("AuthService > loginByEmail", request.getEmail()));
+                                              .orElseThrow(() -> new AuthException.WrongLoginForm("AuthService > loginByEmail", request.getEmail()));
 
         // 2. 비밀번호 확인
         if (!passwordEncoder.matches(request.getPassword(), userEntity.getPassword())) {
@@ -99,6 +100,12 @@ public class AuthService {
         // 2. : 닉네임 중복 체크
         userService.checkDuplicateNickname(request.getNickname(), "AuthService > signupBySocial");
 
+        Optional<UserEntity> isUserExist = userRepository.findBySocialIdAndProvider(request.getSocialId(), request.getProvider());
+
+        if (isUserExist.isPresent()) {
+            throw new UserException.UserDuplicateSocialException("AuthService > signupBySocial", request.getSocialId());
+        }
+
         // 3. 유저 정보 생성
         UserEntity userEntity = UserEntity.createSocial(
             request.getEmail(),
@@ -117,7 +124,7 @@ public class AuthService {
     /**
      * [서비스 로직] 소셜 로그인 -> 404 면 회원가입 페이지로 이동
      */
-    public AuthResponseDto.Access loginBySocial(AuthRequestDto.SocialLogin request, HttpServletResponse response) {
+    public Map<String, Object> loginBySocial(AuthRequestDto.SocialLogin request, HttpServletResponse response) {
 
         UserEntity userEntity;
 
@@ -132,22 +139,29 @@ public class AuthService {
                     socialClient.getKakaoUser(kakaoToken.getAccessToken());
 
                 // 3. DB 조회
-                userEntity = userRepository.findBySocialIdAndProvider(
-                        String.valueOf(kakaoUser.getId()), // Long → String 변환
-                        LoginProvider.KAKAO
-                    )
-                    .orElseThrow(() ->
-                        new UserException.UserNotFoundException(
-                            "AuthService > loginBySocial > kakao login id",
-                            UUID.fromString(kakaoUser.getId())
-                        ));
+                return userRepository.findBySocialIdAndProvider(String.valueOf(kakaoUser.getId()), LoginProvider.KAKAO)
+                                     .<Map<String, Object>>map(user -> {
+                                         // 기존 유저 → 로그인 성공 응답
+                                         var token = setAuthToken(user, response);
+                                         return Map.of(
+                                             "status", "SUCCESS",
+                                             "accessToken", token.getAccess()
+                                         );
+                                     })
+                                     .orElseGet(() -> Map.of(
+                                         "status", "SIGNUP_REQUIRED",
+                                         "provider", "KAKAO",
+                                         "socialId", kakaoUser.getId(),
+                                         "message", "회원가입이 필요합니다."
+                                     ));
+
             }
             // 추가 소셜 적용
             default ->
                 throw new SocialAuthException.UnsupportedProvider("AuthService > loginBySocial", "지원하지 않는 소셜 로그인 provider: " + request.getProvider());
         }
 
-        return setAuthToken(userEntity, response);
+
     }
 
     /**
@@ -184,10 +198,10 @@ public class AuthService {
 
         // 3. 저장된 Refresh Token과 비교
         RefreshTokenEntity savedToken = refreshTokenRepository.findById(userId)
-            .orElseThrow(() -> new AuthException.TokenInvalid("AuthService > refreshAccessToken3", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken));
+                                                              .orElseThrow(() -> new AuthException.TokenInvalid("AuthService > refreshAccessToken3", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken));
 
         if (!savedToken.getToken()
-            .equals(refreshToken)) {
+                       .equals(refreshToken)) {
             throw new AuthException.TokenInvalid("AuthService > refreshAccessToken4", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken);
         }
 
@@ -195,8 +209,8 @@ public class AuthService {
         String newAccessToken = jwtTokenProvider.generateAccessToken(userId, null);
 
         return TokenRefreshResponseDto.builder()
-            .accessCookie(newAccessToken)
-            .build();
+                                      .accessCookie(newAccessToken)
+                                      .build();
     }
 
     /**
@@ -231,11 +245,11 @@ public class AuthService {
      */
     public AuthResponseDto.NicknameDuplicate checkNicknameDuplicate(String nickname) {
         Boolean isDuplicate = this.userRepository.findByNickname(nickname)
-            .isPresent();
+                                                 .isPresent();
 
         return AuthResponseDto.NicknameDuplicate.builder()
-            .isDuplicate(isDuplicate)
-            .build();
+                                                .isDuplicate(isDuplicate)
+                                                .build();
     }
 
 
@@ -246,7 +260,7 @@ public class AuthService {
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if (cookie.getName()
-                    .equals(cookieName)) {
+                          .equals(cookieName)) {
                     return Optional.of(cookie.getValue());
                 }
             }
@@ -260,11 +274,12 @@ public class AuthService {
      * */
     public void setXSRFToken(HttpServletResponse response) {
         String xsrfToken = UUID.randomUUID()
-            .toString();
+                               .toString();
 
         ResponseCookie xsrfCookie = ResponseCookie.from(AuthConstant.XSRF_TOKEN_COOKIE, xsrfToken)
-            .path("/")
-            .build();
+                                                  .path("/")
+                                                  .build()
+            ;
 
         response.addHeader(HttpHeaders.SET_COOKIE, xsrfCookie.toString());
     }
@@ -278,7 +293,7 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), null);
 
         RefreshTokenEntity tokenEntity = refreshTokenRepository.findById(user.getId())
-            .orElse(null);
+                                                               .orElse(null);
 
         if (tokenEntity == null) {
             // 신규 저장
@@ -290,17 +305,18 @@ public class AuthService {
         }
 
         ResponseCookie refreshCookie = ResponseCookie.from(AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken)
-            .httpOnly(true)
-            .sameSite("None")
-            .path("/")
-            .maxAge(AuthConstant.REFRESH_TOKEN_LIFETIME)
-            .build();
+                                                     .httpOnly(true)
+                                                     .sameSite("None")
+                                                     .path("/")
+                                                     .maxAge(AuthConstant.REFRESH_TOKEN_LIFETIME)
+                                                     .build()
+            ;
 
         setXSRFToken(response);
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
         return AuthResponseDto.Access.builder()
-            .access(accessToken)
-            .build();
+                                     .access(accessToken)
+                                     .build();
     }
 }

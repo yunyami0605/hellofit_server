@@ -2,10 +2,7 @@ package com.hellofit.hellofit_server.auth.dto;
 
 import com.hellofit.hellofit_server.user.enums.LoginProvider;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +22,7 @@ public class AuthRequestDto {
         )
         private String code;
 
-        @NotBlank(message = "소셜 공급자는 필수 입력값입니다.")
+        @NotNull(message = "소셜 공급자는 필수 입력값입니다.")
         @Schema(
             description = "소셜 공급자",
             example = "KAKAO",
@@ -65,9 +62,9 @@ public class AuthRequestDto {
         private Boolean isPrivacyAgree;
 
         @NotBlank(message = "소셜 id는 필수 입력값입니다.")
-        private UUID socialId;
+        private String socialId;
 
-        @NotBlank(message = "소셜 공급자는 필수 입력값입니다.")
+        @NotNull(message = "소셜 공급자는 필수 입력값입니다.")
         @Schema(
             description = "소셜 공급자",
             example = "KAKAO"
@@ -81,7 +78,7 @@ public class AuthRequestDto {
     @Schema(name = "AuthRequestDto EmailSignup", description = "회원가입 요청 DTO")
     public static class EmailSignup {
 
-        @NotBlank(message = "비밀번호는 필수입니다.")
+        @NotBlank(message = "이메일은 필수입니다.")
         @Email
         @Schema(
             description = "사용자 이메일 주소",

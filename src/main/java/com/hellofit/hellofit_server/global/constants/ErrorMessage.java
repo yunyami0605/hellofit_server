@@ -14,6 +14,7 @@ public class ErrorMessage {
     // ===== USER 관련 =====
     public static final String USER_PROFILE_NOT_FOUND = "사용자 프로필이 없습니다.";
     public static final String USER_PROFILE_DUPLICATE = "이미 사용자 프로필이 존재합니다.";
+    public static final String DUPLICATE_SOCIAL = "이미 해당 소셜로 가입된 상태입니다.";
 
     // ===== Auth 관련 =====
     public static final String UNAUTHORIZED = "인증이 필요합니다.";
