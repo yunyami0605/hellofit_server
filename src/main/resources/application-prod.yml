@@ -11,14 +11,14 @@ spring:
                 enabled: true
                 bucket: hellofit-bucket
             credentials:
-                access-key: ${AWS_ACCESS_KEY} # sdk에서 자동으로 가져옴
+                access-key: ${AWS_ACCESS_KEY}
                 secret-key: ${AWS_SECRET_KEY}
 
     jpa:
         hibernate:
-            ddl-auto: update
+            ddl-auto: validate
 
-        show-sql: true
+        show-sql: false
         properties:
             hibernate:
                 format_sql: true

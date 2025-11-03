@@ -2,6 +2,9 @@ spring:
     application:
         name: hellofit_server
 
+    profiles:
+        active: dev
+
     cloud:
         aws:
             region:
