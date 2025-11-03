@@ -97,9 +97,9 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
     )
     @ApiResponse(
-        responseCode = "404",
-        description = ErrorMessage.USER_NOT_FOUND,
-        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+        responseCode = "200-1",
+        description = "회원가입이 필요합니다.",
+        content = @Content(schema = @Schema(implementation = AuthResponseDto.Access.class))
     )
     @SecurityRequirements(value = {})
     @PostMapping("/login/social")

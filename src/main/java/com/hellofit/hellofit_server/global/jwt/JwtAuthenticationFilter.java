@@ -1,6 +1,8 @@
 package com.hellofit.hellofit_server.global.jwt;
 
 import com.hellofit.hellofit_server.auth.constants.TokenStatus;
+import com.hellofit.hellofit_server.auth.exception.AuthException;
+import com.hellofit.hellofit_server.global.constants.AuthConstant;
 import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.UserRepository;
 import com.hellofit.hellofit_server.user.exception.UserException;
@@ -51,11 +53,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
+            // 2. 토큰 유효한지 확인
             TokenStatus status = jwtTokenProvider.validateToken(token);
 
-            // 2. 토큰 유효한지 확인
-            if (status != TokenStatus.VALID) {
-                throw new InsufficientAuthenticationException("Token invalid: " + status);
+
+            if (status == TokenStatus.EXPIRED) {
+                // 토큰 만료
+                throw new AuthException.TokenExpired("JwtAuthenticationFilter", token);
+            }
+
+            if (status == TokenStatus.INVALID) {
+                // 토큰 만료
+                throw new AuthException.TokenInvalid("JwtAuthenticationFilter", AuthConstant.ACCESS_TOKEN_COOKIE, token);
             }
 
             String role = jwtTokenProvider.getRoleFromToken(token);
@@ -71,7 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+                                     .setAuthentication(authentication);
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -80,7 +89,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UUID userId = jwtTokenProvider.getUserIdFromToken(token);
 
             UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserException.UserNotFoundException("JwtAuthenticationFilter > doFilterInternal", userId));
+                                            .orElseThrow(() -> new UserException.UserNotFoundException("JwtAuthenticationFilter > doFilterInternal", userId));
 
             UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
@@ -91,7 +100,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext()
-                .setAuthentication(authentication);
+                                 .setAuthentication(authentication);
 
         } catch (Exception ex) {
             SecurityContextHolder.clearContext();

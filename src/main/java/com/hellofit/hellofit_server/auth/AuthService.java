@@ -122,7 +122,7 @@ public class AuthService {
     }
 
     /**
-     * [서비스 로직] 소셜 로그인 -> 404 면 회원가입 페이지로 이동
+     * [서비스 로직] 소셜 로그인 -> '회원가입이 필요합니다.' 메시지를 응답받으면 회원가입 페이지로 이동
      */
     public Map<String, Object> loginBySocial(AuthRequestDto.SocialLogin request, HttpServletResponse response) {
 
@@ -145,7 +145,7 @@ public class AuthService {
                                          var token = setAuthToken(user, response);
                                          return Map.of(
                                              "status", "SUCCESS",
-                                             "accessToken", token.getAccess()
+                                             "access", token.getAccess()
                                          );
                                      })
                                      .orElseGet(() -> Map.of(
@@ -180,17 +180,17 @@ public class AuthService {
 
             refreshTokenRepository.deleteById(userId);
 
-            throw new AuthException.TokenExpired("ac refresh", refreshToken);
+            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken1", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken);
         } else if (validatedTokenStatus.equals(TokenStatus.INVALID)) {
             // 유효하지 않는 rf 토큰으로 접근 시,
-            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken1", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken);
+            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken2", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken);
         }
 
         String xsrfHeader = request.getHeader("X-XSRF-TOKEN");
 
         // 1-2. xsrf 검사
         if (xsrfHeader == null || !xsrfHeader.equals(xsrfToken)) {
-            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken2", AuthConstant.XSRF_TOKEN_COOKIE, xsrfToken);
+            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken3", AuthConstant.XSRF_TOKEN_COOKIE, xsrfToken);
         }
 
         // 2. 토큰에서 userId 추출
@@ -198,11 +198,11 @@ public class AuthService {
 
         // 3. 저장된 Refresh Token과 비교
         RefreshTokenEntity savedToken = refreshTokenRepository.findById(userId)
-                                                              .orElseThrow(() -> new AuthException.TokenInvalid("AuthService > refreshAccessToken3", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken));
+                                                              .orElseThrow(() -> new AuthException.TokenInvalid("AuthService > refreshAccessToken4", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken));
 
         if (!savedToken.getToken()
                        .equals(refreshToken)) {
-            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken4", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken);
+            throw new AuthException.TokenInvalid("AuthService > refreshAccessToken5", AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken);
         }
 
         // 4. 새 Access Token 발급

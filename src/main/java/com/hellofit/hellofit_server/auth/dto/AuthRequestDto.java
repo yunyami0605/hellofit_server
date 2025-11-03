@@ -15,14 +15,14 @@ public class AuthRequestDto {
     @AllArgsConstructor
     @Schema(name = "AuthRequest SocialLogin", description = "소셜 로그인 요청 DTO")
     public static class SocialLogin {
-        @NotBlank(message = "코드는 필수 입력값입니다.")
+        @NotBlank(message = "유효하지 않은 인증 요청입니다.")
         @Schema(
             description = "인가 코드",
             example = "a33wefhuhl..."
         )
         private String code;
 
-        @NotNull(message = "소셜 공급자는 필수 입력값입니다.")
+        @NotNull(message = "유효하지 않은 인증 요청입니다.")
         @Schema(
             description = "소셜 공급자",
             example = "KAKAO",
@@ -36,7 +36,7 @@ public class AuthRequestDto {
     @AllArgsConstructor
     @Schema(name = "AuthRequestDto SocialSignup", description = "소셜 회원가입 요청 DTO")
     public static class SocialSignup {
-        @NotBlank(message = "비밀번호는 필수입니다.")
+        @NotBlank(message = "이메일은 필수입니다.")
         @Email
         @Schema(
             description = "사용자 이메일 주소",
