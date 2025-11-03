@@ -16,7 +16,7 @@ public class DietRecommendationScheduler {
     /**
      * 매일 00시에 전체 유저 식단 생성
      */
-    @Scheduled(cron = "0 55 12 * * *")
+    @Scheduled(cron = "0 54 21 * * *")
 //    @Scheduled(cron = "*/10 * * * * *")
     public void runDailyJob() {
         log.info("매일 자정 식단 생성 스케줄러 실행");

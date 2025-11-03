@@ -70,7 +70,7 @@ public enum ErrorCode {
 
     // 잘못된 로그인 폼으로 접근 시
     @Schema(description = ErrorMessage.WRONG_LOGIN_FORM)
-    WRONG_LOGIN_FORM(HttpStatus.UNAUTHORIZED, ErrorMessage.WRONG_LOGIN_FORM),
+    WRONG_LOGIN_FORM(HttpStatus.BAD_REQUEST, ErrorMessage.WRONG_LOGIN_FORM),
 
     // 게시글을 찾을 수 없는 경우
     @Schema(description = ErrorMessage.POST_NOT_FOUND)

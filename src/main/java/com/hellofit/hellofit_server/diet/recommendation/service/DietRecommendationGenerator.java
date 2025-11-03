@@ -55,12 +55,12 @@ public class DietRecommendationGenerator {
             log.info("foods={}", rec.getFoods());
 
             MealType mealType = MealType.valueOf(rec.getMealType()
-                .toUpperCase());
+                                                    .toUpperCase());
 
             // 끼니 단위로 중복 체크
             boolean exists = existing.stream()
-                .anyMatch(r -> r.getMealType()
-                    .equals(mealType));
+                                     .anyMatch(r -> r.getMealType()
+                                                     .equals(mealType));
 
             if (exists) {
                 log.info("해당 끼니 이미 존재 userId={} date={} meal={}", user.getId(), date, mealType);
@@ -91,7 +91,7 @@ public class DietRecommendationGenerator {
     public void generateDailyDietsForOneUser(UUID userId) {
         LocalDate today = LocalDate.now();
         UserEntity userEntity = userRepository.findById(userId)
-            .orElseThrow(() -> new UserException.UserNotFoundException("DietRecommendationGenerator -> generateDailyDietsByPerson", userId));
+                                              .orElseThrow(() -> new UserException.UserNotFoundException("DietRecommendationGenerator -> generateDailyDietsByPerson", userId));
 
         // A, B, C 순차 처리
         for (int offset = 0; offset <= 2; offset++) {
@@ -111,6 +111,9 @@ public class DietRecommendationGenerator {
         }
     }
 
+    /**
+     * 매일 식단 추천 생성 로직
+     */
     @Transactional
     public void generateDailyDiets() {
         LocalDate today = LocalDate.now();
@@ -121,19 +124,19 @@ public class DietRecommendationGenerator {
             log.info(String.valueOf(offset));
             LocalDate targetDate = today.plusDays(offset);
             users.parallelStream()
-                .forEach(user -> {
-                    try {
-                        if (user.getProfile() == null) {
-                            log.warn("유저 프로필 없음 → 스킵 userId={}", user.getId());
-                            return;
-                        }
+                 .forEach(user -> {
+                     try {
+                         if (user.getProfile() == null) {
+                             log.warn("유저 프로필 없음 → 스킵 userId={}", user.getId());
+                             return;
+                         }
 
-                        LLMDietRequestDto.DietAutoRequest req = buildRequest(user); // 유저 프로필 + history 구성
-                        generateForUser(user, targetDate, req);
-                    } catch (Exception e) {
-                        log.error("식단 생성 실패 userId={} date={}", user.getId(), targetDate, e);
-                    }
-                });
+                         LLMDietRequestDto.DietAutoRequest req = buildRequest(user); // 유저 프로필 + history 구성
+                         generateForUser(user, targetDate, req);
+                     } catch (Exception e) {
+                         log.error("식단 생성 실패 userId={} date={}", user.getId(), targetDate, e);
+                     }
+                 });
         }
     }
 
@@ -149,28 +152,29 @@ public class DietRecommendationGenerator {
 
         // 3. history 변환
         Map<String, Map<String, LLMDietRequestDto.MealRecordDto>> history = logs.stream()
-            .collect(Collectors.groupingBy(
-                log -> log.getLogDate()
-                    .toString(), // 날짜 string key
-                Collectors.toMap(
-                    log -> log.getMealType()
-                        .name(), // 끼니 (BREAKFAST, LUNCH, DINNER)
-                    log -> {
-                        List<LLMDietRequestDto.FoodRecordDto> foods = log.getItems()
-                            .stream()
-                            .map(item -> new LLMDietRequestDto.FoodRecordDto(
-                                item.getFoodName(),
-                                item.getCalories(),
-                                item.getProtein(),
-                                item.getCarbs(),
-                                item.getFat()
-                            ))
-                            .toList();
+                                                                                .collect(Collectors.groupingBy(
+                                                                                    log -> log.getLogDate()
+                                                                                              .toString(), // 날짜 string key
+                                                                                    Collectors.toMap(
+                                                                                        log -> log.getMealType()
+                                                                                                  .name(), // 끼니 (BREAKFAST, LUNCH, DINNER)
+                                                                                        log -> {
+                                                                                            List<LLMDietRequestDto.FoodRecordDto> foods = log.getItems()
+                                                                                                                                             .stream()
+                                                                                                                                             .map(item -> new LLMDietRequestDto.FoodRecordDto(
+                                                                                                                                                 item.getFoodName(),
+                                                                                                                                                 item.getCalories(),
+                                                                                                                                                 item.getProtein(),
+                                                                                                                                                 item.getCarbs(),
+                                                                                                                                                 item.getFat()
+                                                                                                                                             ))
+                                                                                                                                             .toList()
+                                                                                                ;
 
-                        return new LLMDietRequestDto.MealRecordDto(foods, "user log"); // 설명: 직접 기록/추천 수락 여부 등
-                    }
-                )
-            ));
+                                                                                            return new LLMDietRequestDto.MealRecordDto(foods, "user log"); // 설명: 직접 기록/추천 수락 여부 등
+                                                                                        }
+                                                                                    )
+                                                                                ));
 
         // 4. 최종 요청 DTO 반환
         return new LLMDietRequestDto.DietAutoRequest(userProfile, history);
