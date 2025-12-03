@@ -17,9 +17,9 @@ spring:
                 enabled: false   # dev에서는 끄기
 
     datasource:
-        url: jdbc:mariadb://localhost:3308/hellofit_db
-        username: hellofit_user
-        password: ${password}
+        url: jdbc:mariadb://localhost:3308/db
+        username: user
+        password: ${MARIADB_PASSWORD}
         driver-class-name: org.mariadb.jdbc.Driver
 
     jpa:

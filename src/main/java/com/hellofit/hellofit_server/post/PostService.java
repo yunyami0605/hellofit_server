@@ -78,13 +78,14 @@ public class PostService {
                                 String key = _image.getObjectKey();
 
                                 if (key == null || key.trim()
-                                    .isEmpty()) {
+                                                      .isEmpty()) {
                                     return null;
                                 }
                                 return awsService.presignedGetUrl(key);
                             }
                         )
-                        .toList();
+                        .toList()
+                        ;
 
                     Integer likeCount = likeRepository.countByTargetTypeAndTargetId(
                         LikeTargetType.POST, _posts.getId()
@@ -93,12 +94,13 @@ public class PostService {
                     Integer commentCount = commentRepository.countByPostId(_posts.getId());
 
                     List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _posts.getUser()
-                            .getId())
-                        .stream()
-                        .map((v) -> {
-                            return awsService.presignedGetUrl(v.getObjectKey());
-                        })
-                        .toList();
+                                                                                                           .getId())
+                                                             .stream()
+                                                             .map((v) -> {
+                                                                 return awsService.presignedGetUrl(v.getObjectKey());
+                                                             })
+                                                             .toList()
+                        ;
 
                     String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
 
@@ -106,21 +108,22 @@ public class PostService {
                     return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount, authorImage);
                 }
             )
-            .toList();
+            .toList()
+            ;
 
         // 5. items가 빈 배열이면 nextCursor = null, 아니면 마지막 cursorId 설정
         String nextCursor = (hasNext && !items.isEmpty())
             ? items.get(items.size() - 1)
-            .getCreatedAt()
-            .toString()
+                   .getCreatedAt()
+                   .toString()
             : null;
 
         // 6. cursor 응답 형성 후 반환
         return CursorResponse.<PostResponseDto.SummaryList>builder()
-            .items(items)
-            .nextCursor(nextCursor)
-            .hasNext(hasNext)
-            .build();
+                             .items(items)
+                             .nextCursor(nextCursor)
+                             .hasNext(hasNext)
+                             .build();
     }
 
     // 게시글 목록 조회
@@ -141,19 +144,20 @@ public class PostService {
             .stream()
             .map((_posts) -> {
                     List<String> presignedImages = this.imageService.getImages(ImageTargetType.POST, _posts.getId())
-                        .stream()
-                        .map((_image) -> {
-                                String key = _image.getObjectKey();
+                                                                    .stream()
+                                                                    .map((_image) -> {
+                                                                            String key = _image.getObjectKey();
 
-                                if (key == null || key.trim()
-                                    .isEmpty()) {
-                                    return null;
-                                }
+                                                                            if (key == null || key.trim()
+                                                                                                  .isEmpty()) {
+                                                                                return null;
+                                                                            }
 
-                                return awsService.presignedGetUrl(key);
-                            }
-                        )
-                        .toList();
+                                                                            return awsService.presignedGetUrl(key);
+                                                                        }
+                                                                    )
+                                                                    .toList()
+                        ;
 
                     Integer likeCount = likeRepository.countByTargetTypeAndTargetId(
                         LikeTargetType.POST, _posts.getId()
@@ -162,32 +166,34 @@ public class PostService {
                     Integer commentCount = commentRepository.countByPostId(_posts.getId());
 
                     List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _posts.getUser()
-                            .getId())
-                        .stream()
-                        .map((v) -> {
-                            return awsService.presignedGetUrl(v.getObjectKey());
-                        })
-                        .toList();
+                                                                                                           .getId())
+                                                             .stream()
+                                                             .map((v) -> {
+                                                                 return awsService.presignedGetUrl(v.getObjectKey());
+                                                             })
+                                                             .toList()
+                        ;
 
                     String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
 
                     return PostResponseDto.SummaryList.from(_posts, presignedImages, likeCount, commentCount, authorImage);
                 }
             )
-            .toList();
+            .toList()
+            ;
 
         // 5. nextCursor 추가
         String nextCursor = (hasNext && !items.isEmpty())
             ? items.get(items.size() - 1)
-            .getCreatedAt()
-            .toString()
+                   .getCreatedAt()
+                   .toString()
             : null;
 
         return CursorResponse.<PostResponseDto.SummaryList>builder()
-            .nextCursor(nextCursor)
-            .hasNext(hasNext)
-            .items(items)
-            .build();
+                             .nextCursor(nextCursor)
+                             .hasNext(hasNext)
+                             .items(items)
+                             .build();
     }
 
     /**
@@ -195,7 +201,7 @@ public class PostService {
      */
     public PostEntity getPostById(UUID id, String errorPoint) {
         return postRepository.findById(id)
-            .orElseThrow(() -> new PostException.NotFound(errorPoint, id));
+                             .orElseThrow(() -> new PostException.NotFound(errorPoint, id));
     }
 
     /**
@@ -208,23 +214,25 @@ public class PostService {
         postEntity.increaseViewCount();
 
         List<String> presignedGetKey = this.imageService.getImages(ImageTargetType.POST, id)
-            .stream()
-            .map((_image) ->
-                awsService.presignedGetUrl(_image
-                    .getObjectKey())
-            )
-            .toList();
+                                                        .stream()
+                                                        .map((_image) ->
+                                                            awsService.presignedGetUrl(_image
+                                                                .getObjectKey())
+                                                        )
+                                                        .toList()
+            ;
 
         Integer commentCount = this.commentRepository.countByPostId(id);
         Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, id);
 
         List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, postEntity.getUser()
-                .getId())
-            .stream()
-            .map((v) -> {
-                return awsService.presignedGetUrl(v.getObjectKey());
-            })
-            .toList();
+                                                                                                   .getId())
+                                                 .stream()
+                                                 .map((v) -> {
+                                                     return awsService.presignedGetUrl(v.getObjectKey());
+                                                 })
+                                                 .toList()
+            ;
 
         String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
 
@@ -249,29 +257,31 @@ public class PostService {
         }
 
         return posts.stream()
-            .map(_post -> {
-                UUID _postId = _post.getId();
-                List<String> presignedImages = imageService.getImages(ImageTargetType.POST, _postId)
-                    .stream()
-                    .map(img -> awsService.presignedGetUrl(img.getObjectKey()))
-                    .toList();
+                    .map(_post -> {
+                        UUID _postId = _post.getId();
+                        List<String> presignedImages = imageService.getImages(ImageTargetType.POST, _postId)
+                                                                   .stream()
+                                                                   .map(img -> awsService.presignedGetUrl(img.getObjectKey()))
+                                                                   .toList()
+                            ;
 
-                Integer commentCount = this.commentRepository.countByPostId(_postId);
-                Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, _postId);
+                        Integer commentCount = this.commentRepository.countByPostId(_postId);
+                        Integer likeCount = this.likeRepository.countByTargetTypeAndTargetId(LikeTargetType.POST, _postId);
 
-                List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _post.getUser()
-                        .getId())
-                    .stream()
-                    .map((v) -> {
-                        return awsService.presignedGetUrl(v.getObjectKey());
+                        List<String> _authorImages = imageService.getImages(ImageTargetType.UserProfile, _post.getUser()
+                                                                                                              .getId())
+                                                                 .stream()
+                                                                 .map((v) -> {
+                                                                     return awsService.presignedGetUrl(v.getObjectKey());
+                                                                 })
+                                                                 .toList()
+                            ;
+
+                        String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
+
+                        return PostResponseDto.Summary.from(_post, presignedImages, commentCount, likeCount, authorImage);
                     })
                     .toList();
-
-                String authorImage = _authorImages.isEmpty() ? null : _authorImages.get(0);
-
-                return PostResponseDto.Summary.from(_post, presignedImages, commentCount, likeCount, authorImage);
-            })
-            .toList();
     }
 
 
@@ -298,18 +308,16 @@ public class PostService {
 
         // 4. 이미지 생성 후, 게시글 연결
         IntStream.range(0, request.getImageKeys()
-                .size())
-            .forEach((i) -> {
-                String key = request.getImageKeys()
-                    .get(i);
+                                  .size())
+                 .forEach((i) -> {
+                     String key = request.getImageKeys()
+                                         .get(i);
 
-                this.imageService.createImage(key, ImageTargetType.POST, post.getId(), i);
-            });
+                     this.imageService.createImage(key, ImageTargetType.POST, post.getId(), i);
+                 });
 
 
-        return MutationResponse.builder()
-            .success(true)
-            .build();
+        return MutationResponse.create(true, post.getId());
     }
 
     /*
@@ -322,8 +330,8 @@ public class PostService {
 
         // 2. 작성자인지 검증
         if (!postEntity.getUser()
-            .getId()
-            .equals(userId)) {
+                       .getId()
+                       .equals(userId)) {
             throw new CommonException.Forbidden("updatePost", userId.toString());
         }
 
@@ -334,8 +342,9 @@ public class PostService {
         // 4. db 이미지 가져오기
         List<ImageEntity> currentImages = this.imageService.getImages(ImageTargetType.POST, postEntity.getId());
         Set<String> currentKeys = currentImages.stream()
-            .map((_image) -> _image.getObjectKey())
-            .collect(Collectors.toSet());
+                                               .map((_image) -> _image.getObjectKey())
+                                               .collect(Collectors.toSet())
+            ;
 
         // 5. request 이미지 중복 제거
         List<String> newKeys = requestDto.getImageKeys();
@@ -353,27 +362,28 @@ public class PostService {
 
         // 7. 수정 요청에 새로 추가된 이미지 생성
         IntStream.range(0, newKeys.size())
-            .forEach(i -> {
-                String key = newKeys.get(i);
-                if (!currentKeys.contains(key)) {
-                    // 현재 키 목록 중, 없으면 새로 생성 후 추가
-                    this.imageService.createImage(key, ImageTargetType.POST, postId, i);
-                }
-            });
+                 .forEach(i -> {
+                     String key = newKeys.get(i);
+                     if (!currentKeys.contains(key)) {
+                         // 현재 키 목록 중, 없으면 새로 생성 후 추가
+                         this.imageService.createImage(key, ImageTargetType.POST, postId, i);
+                     }
+                 });
 
 
         // 8. 요청 순서에 따라 이미지 순서 재정렬
         IntStream.range(0, newKeys.size())
-            .forEach(i -> {
-                String key = newKeys.get(i);
+                 .forEach(i -> {
+                     String key = newKeys.get(i);
 
-                currentImages.stream()
-                    .filter(img -> img
-                        .getObjectKey()
-                        .equals(key))
-                    .findFirst()
-                    .ifPresent(img -> img.changeSortOrder(i));
-            });
+                     currentImages.stream()
+                                  .filter(img -> img
+                                      .getObjectKey()
+                                      .equals(key))
+                                  .findFirst()
+                                  .ifPresent(img -> img.changeSortOrder(i))
+                     ;
+                 });
 
         return MutationResponse.of(true);
     }
@@ -391,8 +401,8 @@ public class PostService {
 
         // 2. 작성자인지 체크
         if (!post.getUser()
-            .getId()
-            .equals(authorId)) {
+                 .getId()
+                 .equals(authorId)) {
             throw new CommonException.Forbidden("PostService -> deletePostOne", authorId.toString());
         }
 
@@ -414,16 +424,17 @@ public class PostService {
 
         // 2. aws s3에 presignedUrl 요청
         List<ImageResponseDto.DataBeforeMutation> images = this.imageService.getImages(ImageTargetType.POST, id)
-            .stream()
-            .map((_images) -> {
-                String objectKey = _images.getObjectKey();
+                                                                            .stream()
+                                                                            .map((_images) -> {
+                                                                                String objectKey = _images.getObjectKey();
 
-                String presignedUrl = awsService.presignedGetUrl(objectKey);
+                                                                                String presignedUrl = awsService.presignedGetUrl(objectKey);
 
-                // 최종 응답 데이터에 통합
-                return ImageResponseDto.DataBeforeMutation.fromEntity(objectKey, presignedUrl);
-            })
-            .toList();
+                                                                                // 최종 응답 데이터에 통합
+                                                                                return ImageResponseDto.DataBeforeMutation.fromEntity(objectKey, presignedUrl);
+                                                                            })
+                                                                            .toList()
+            ;
 
         return PostResponseDto.PatchData.fromEntity(post, images);
     }

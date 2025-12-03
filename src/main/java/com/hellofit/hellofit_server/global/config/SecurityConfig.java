@@ -48,12 +48,12 @@ public class SecurityConfig {
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
-                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
-                .components(new Components()
-                        .addSecuritySchemes("bearerAuth", new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")));
+            .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+            .components(new Components()
+                .addSecuritySchemes("bearerAuth", new SecurityScheme()
+                    .type(SecurityScheme.Type.HTTP)
+                    .scheme("bearer")
+                    .bearerFormat("JWT")));
     }
 
 
@@ -68,24 +68,29 @@ public class SecurityConfig {
                                                    AuthenticationEntryPoint unauthorizedEntryPoint,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> {}) // withDefaults() 동일
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT는 무상태
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedEntryPoint))       // 전역 401 처리
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/h2-console/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> {
+            }) // withDefaults() 동일
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT는 무상태
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(unauthorizedEntryPoint))       // 전역 401 처리
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/auth/**",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-resources/**",
+                    "/h2-console/**",
+                    "/ws/**",
+                    "/api/ws/**"
                 )
-                .formLogin(fl -> fl.disable())   // 폼 로그인 사용 안함
-                .httpBasic(hb -> hb.disable())   // 기본 인증 사용 안함
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // JWT 필터 등록
-                .build();
+                .permitAll()
+                .anyRequest()
+                .authenticated()
+            )
+            .formLogin(fl -> fl.disable())   // 폼 로그인 사용 안함
+            .httpBasic(hb -> hb.disable())   // 기본 인증 사용 안함
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class) // JWT 필터 등록
+            .build();
     }
 
 

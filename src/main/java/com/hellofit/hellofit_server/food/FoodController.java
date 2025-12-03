@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,14 @@ import java.util.UUID;
 public class FoodController {
 
     private final FoodService foodService;
+
+    @DeleteMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @Operation(summary = "모든 Food 데이터 삭제 (ADMIN)", description = "foods 테이블 전체 데이터를 삭제합니다. 되돌릴 수 없습니다.")
+    public ResponseEntity<Void> deleteAllFoods() {
+        foodService.deleteAllFoods();
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     @Operation(summary = "CSV 파일 업로드", description = "CSV 파일을 업로드하여 foods 테이블에 저장합니다.")

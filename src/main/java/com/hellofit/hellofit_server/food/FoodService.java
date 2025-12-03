@@ -21,6 +21,13 @@ public class FoodService {
 
     private final FoodRepository foodRepository;
 
+    /**
+     * food db 데이터 초기화
+     */
+    public void deleteAllFoods() {
+        foodRepository.deleteAllInBatch();
+    }
+
     public int saveFoodsFromCsv(MultipartFile file) {
         try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), java.nio.charset.Charset.forName("MS949")))) {
             String[] nextLine;

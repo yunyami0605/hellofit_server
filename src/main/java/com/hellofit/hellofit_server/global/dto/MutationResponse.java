@@ -11,10 +11,18 @@ import java.util.UUID;
 @Builder
 public class MutationResponse {
     private Boolean success;
+    private UUID id;
 
     public static MutationResponse of(Boolean success) {
         return MutationResponse.builder()
-            .success(success)
-            .build();
+                               .success(success)
+                               .build();
+    }
+
+    public static MutationResponse create(Boolean success, UUID id) {
+        return MutationResponse.builder()
+                               .success(success)
+                               .id(id)
+                               .build();
     }
 }
