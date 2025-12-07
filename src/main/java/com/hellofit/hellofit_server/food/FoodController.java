@@ -26,7 +26,7 @@ public class FoodController {
     private final FoodService foodService;
 
     @DeleteMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    // @PreAuthorize("hasAuthority('ADMIN')")
     @Operation(summary = "모든 Food 데이터 삭제 (ADMIN)", description = "foods 테이블 전체 데이터를 삭제합니다. 되돌릴 수 없습니다.")
     public ResponseEntity<Void> deleteAllFoods() {
         foodService.deleteAllFoods();

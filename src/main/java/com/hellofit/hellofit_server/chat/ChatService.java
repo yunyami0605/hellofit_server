@@ -2,6 +2,7 @@ package com.hellofit.hellofit_server.chat;
 
 import com.hellofit.hellofit_server.chat.dto.ChatDtos;
 import com.hellofit.hellofit_server.global.exception.CommonException;
+import com.hellofit.hellofit_server.llm.LlmClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -9,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -89,6 +93,27 @@ public class ChatService {
         ChatMessageEntity entity = ChatMessageEntity.of(userId, sessionIdOpt.orElse(null), ChatRole.ASSISTANT, content);
         chatMessageRepository.save(entity);
         return entity;
+    }
+
+    @Transactional(readOnly = true)
+    public List<LlmClient.ChatMessage> getSessionMessagesForLlm(UUID userId, UUID sessionId, int limit) {
+        if (sessionId == null) {
+            return List.of();
+        }
+        PageRequest page = PageRequest.of(0, Math.max(1, limit));
+        Page<ChatMessageEntity> result = chatMessageRepository.findByUserIdAndSessionIdOrderByCreatedAtDesc(userId, sessionId, page);
+        List<ChatMessageEntity> entities = new ArrayList<>(result.getContent());
+        entities.sort(Comparator.comparing(ChatMessageEntity::getCreatedAt));
+        List<LlmClient.ChatMessage> msgs = new ArrayList<>();
+        for (ChatMessageEntity e : entities) {
+            String role = switch (e.getRole()) {
+                case USER -> "user";
+                case ASSISTANT -> "assistant";
+                case SYSTEM -> "system";
+            };
+            msgs.add(new LlmClient.ChatMessage(role, e.getContent()));
+        }
+        return msgs;
     }
 }
 

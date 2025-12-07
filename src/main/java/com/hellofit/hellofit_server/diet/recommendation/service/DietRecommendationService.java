@@ -5,9 +5,7 @@ import com.hellofit.hellofit_server.diet.recommendation.DietRecommendationEntity
 import com.hellofit.hellofit_server.diet.recommendation.repository.DietRecommendationRepository;
 import com.hellofit.hellofit_server.global.enums.RecordSource;
 import com.hellofit.hellofit_server.user.UserEntity;
-import com.hellofit.hellofit_server.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +20,6 @@ import java.util.UUID;
 public class DietRecommendationService {
 
     private final DietRecommendationRepository recommendationRepository;
-    private final UserRepository userRepository;
 
     public List<DietRecommendationEntity> getRecommendations(UserEntity user, LocalDate date) {
         List<DietRecommendationEntity> recommendations;

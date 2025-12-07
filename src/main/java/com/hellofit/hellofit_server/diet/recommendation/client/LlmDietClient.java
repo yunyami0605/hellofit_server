@@ -10,7 +10,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.List;
 
 @Slf4j
 @Component

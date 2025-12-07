@@ -36,21 +36,22 @@ public class FoodService {
 
             while ((nextLine = reader.readNext()) != null) {
                 FoodEntity food = FoodEntity.builder()
-                    .foodCode(nextLine[0])         // 식품코드
-                    .foodName(nextLine[1])         // 식품명
-                    .category(nextLine[7])         // 식품대분류명
-                    .repFoodName(nextLine[9])      // 대표식품명
-                    .kcal(parseFloat(nextLine[17]))      // 에너지(kcal)
-                    .protein(parseFloat(nextLine[19]))   // 단백질(g)
-                    .fat(parseFloat(nextLine[20]))       // 지방(g)
-                    .carbs(parseFloat(nextLine[22]))     // 탄수화물(g)
-                    .sugar(parseFloat(nextLine[23]))     // 당류(g)
-                    .calcium(parseFloat(nextLine[25]))   // 칼슘(mg)
-                    .sodium(parseFloat(nextLine[29]))    // 나트륨(mg)
-                    .cholesterol(parseFloat(nextLine[38])) // 콜레스테롤(mg)
-                    .weight(parseFloat(nextLine[43]))    // 식품중량
-                    .dataDate(LocalDate.parse(nextLine[48])) // 데이터기준일자
-                    .build();
+                                            .foodCode(nextLine[0])         // 식품코드
+                                            .foodName(nextLine[1])         // 식품명
+                                            .category(nextLine[2])         // 식품대분류명
+                                            .repFoodName(nextLine[3])      // 대표식품명
+                                            .kcal(parseFloat(nextLine[4]))      // 에너지(kcal)
+                                            .protein(parseFloat(nextLine[5]))   // 단백질(g)
+                                            .fat(parseFloat(nextLine[6]))       // 지방(g)
+                                            .carbs(parseFloat(nextLine[7]))     // 탄수화물(g)
+                                            .sugar(parseFloat(nextLine[8]))     // 당류(g)
+                                            .calcium(parseFloat(nextLine[9]))   // 칼슘(mg)
+                                            .sodium(parseFloat(nextLine[10]))    // 나트륨(mg)
+                                            .cholesterol(parseFloat(nextLine[11])) // 콜레스테롤(mg)
+                                            .weight(parseFloat(nextLine[12]))    // 식품중량
+                                            .dataDate(LocalDate.parse(nextLine[13])) // 데이터기준일자
+                                            .build()
+                    ;
                 foods.add(food);
             }
             foodRepository.saveAll(foods);
@@ -86,18 +87,19 @@ public class FoodService {
         List<FoodEntity> resizedFoods = hasNext ? foods.subList(0, size) : foods;
 
         String nextCursor = hasNext ? resizedFoods.get(resizedFoods.size() - 1)
-            .getId()
-            .toString() : null;
+                                                  .getId()
+                                                  .toString() : null;
 
         List<FoodResponseDto.Summary> result = resizedFoods.stream()
-            .map(FoodResponseDto.Summary::fromEntity)
-            .toList();
+                                                           .map(FoodResponseDto.Summary::fromEntity)
+                                                           .toList()
+            ;
 
         return CursorResponse.<FoodResponseDto.Summary>builder()
-            .items(result)
-            .nextCursor(nextCursor)
-            .hasNext(hasNext)
-            .build();
+                             .items(result)
+                             .nextCursor(nextCursor)
+                             .hasNext(hasNext)
+                             .build();
     }
 
 }

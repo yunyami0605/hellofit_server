@@ -112,7 +112,7 @@ public class DietRecommendationGenerator {
     }
 
     /**
-     * 매일 식단 추천 생성 로직
+     * 매일 식단 추천 생성 로직 cron 용
      */
     @Transactional
     public void generateDailyDiets() {

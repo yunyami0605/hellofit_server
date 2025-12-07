@@ -110,8 +110,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private void handleUserMessage(WebSocketSession session, UUID userId, JsonNode node) throws IOException {
         String content = node.path("content")
                              .asText();
-
-                             log.info("[WS] test message received");
         if (content == null || content.isBlank()) {
             sendJson(session, Map.of("type", "error", "code", "INVALID_INPUT", "message", "content required"));
             return;
@@ -122,8 +120,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         log.info("[WS] user_message received: userId={} len={} preview=\"{}\"",
-            userId, content.length(), preview(content, 120));
-        var userMsg = chatService.createUserMessageEntity(userId, content, Optional.empty());
+                userId, content.length(), preview(content, 120));
+        // 세션 파라미터(optional)
+        UUID sessionId = null;
+        if (node.has("sessionId")) {
+            String s = node.get("sessionId").asText();
+            if (s != null && !s.isBlank()) {
+                if (s.startsWith("cs_")) {
+                    try { sessionId = UUID.fromString(s.substring(3)); } catch (Exception ignored) {}
+                } else {
+                    try { sessionId = UUID.fromString(s); } catch (Exception ignored) {}
+                }
+            }
+        }
+        var userMsg = chatService.createUserMessageEntity(userId, content, Optional.ofNullable(sessionId));
         log.debug("[WS] user_message saved: userId={} msgId=cm_{}", userId, userMsg.getId());
 
         // echo back and broadcast to room
@@ -139,7 +149,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         );
         broadcastToRoom(session, userMsgPayload);
 
-        String reply = llmClient.generate(content);
+        // 세션 히스토리 기반 LLM 호출 (가능한 경우)
+        var history = chatService.getSessionMessagesForLlm(userId, sessionId, 20);
+        var historyWithCurrent = new java.util.ArrayList<com.hellofit.hellofit_server.llm.LlmClient.ChatMessage>(history);
+        historyWithCurrent.add(new com.hellofit.hellofit_server.llm.LlmClient.ChatMessage("user", content));
+        String reply = history.isEmpty() ? llmClient.generate(content) : llmClient.chat(historyWithCurrent);
 
         // streaming simulation by chunking
         // 실제 LLM이 스트리밍을 지원하지 않는 경우 대비: 고정 길이로 분할 전송
@@ -149,7 +163,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             sendJson(session, Map.of("type", "assistant_chunk", "delta", delta));
         }
 
-        var assistantMsg = chatService.saveAssistantMessageEntity(userId, reply, Optional.empty());
+        var assistantMsg = chatService.saveAssistantMessageEntity(userId, reply, Optional.ofNullable(sessionId));
         log.info("[WS] assistant_done: userId={} answerLen={} msgId=cm_{}", userId, reply.length(), assistantMsg.getId());
         ObjectNode done = objectMapper.createObjectNode();
         done.put("type", "assistant_done");
