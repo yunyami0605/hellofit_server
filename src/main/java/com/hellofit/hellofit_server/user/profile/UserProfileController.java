@@ -3,7 +3,6 @@ package com.hellofit.hellofit_server.user.profile;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.global.dto.MutationResponse;
-import com.hellofit.hellofit_server.user.UserEntity;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
 import com.hellofit.hellofit_server.user.profile.dto.CreateUserProfileRequestDto;
 import com.hellofit.hellofit_server.user.profile.dto.UpdateUserProfileRequestDto;

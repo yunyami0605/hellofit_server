@@ -21,16 +21,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.env.Environment;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Arrays;
 
 @Slf4j
 @Service
@@ -44,6 +45,7 @@ public class AuthService {
     private final SocialClient socialClient;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final Environment env;
 
     /**
      * [서비스 로직] 이메일 회원가입
@@ -126,8 +128,6 @@ public class AuthService {
      */
     public Map<String, Object> loginBySocial(AuthRequestDto.SocialLogin request, HttpServletResponse response) {
 
-        UserEntity userEntity;
-
         switch (request.getProvider()) {
             case KAKAO -> {
                 // 1. 인가 코드 -> 카카오 토큰 발급
@@ -209,7 +209,7 @@ public class AuthService {
         String newAccessToken = jwtTokenProvider.generateAccessToken(userId, null);
 
         return TokenRefreshResponseDto.builder()
-                                      .accessCookie(newAccessToken)
+                                      .access(newAccessToken)
                                       .build();
     }
 
@@ -306,7 +306,10 @@ public class AuthService {
 
         ResponseCookie refreshCookie = ResponseCookie.from(AuthConstant.REFRESH_TOKEN_COOKIE, refreshToken)
                                                      .httpOnly(true)
-                                                     .sameSite("None")
+                                                     // 개발 환경에서는 http 로 테스트 가능하도록 SameSite=Lax, secure=false
+                                                     // 운영(prod)에서는 크로스사이트 전송을 위해 SameSite=None, secure=true
+                                                     .sameSite(Arrays.asList(env.getActiveProfiles()).contains("prod") ? "None" : "Lax")
+                                                     .secure(Arrays.asList(env.getActiveProfiles()).contains("prod"))
                                                      .path("/")
                                                      .maxAge(AuthConstant.REFRESH_TOKEN_LIFETIME)
                                                      .build()

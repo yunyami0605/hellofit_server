@@ -70,6 +70,9 @@ dependencies {
 
     // WebSocket
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+
+    // String unescape for Unicode (\uXXXX -> UTF-8)
+    implementation("org.apache.commons:commons-text:1.11.0")
 }
 
 tasks.withType<Test> {

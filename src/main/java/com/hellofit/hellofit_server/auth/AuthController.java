@@ -4,7 +4,6 @@ import com.hellofit.hellofit_server.auth.dto.*;
 import com.hellofit.hellofit_server.global.constants.ErrorMessage;
 import com.hellofit.hellofit_server.global.dto.ApiErrorResponse;
 import com.hellofit.hellofit_server.user.dto.UserMappingResponseDto;
-import com.hellofit.hellofit_server.user.exception.UserException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 
