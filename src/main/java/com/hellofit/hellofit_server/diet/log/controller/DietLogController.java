@@ -21,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -121,5 +122,118 @@ public class DietLogController {
         logService.delete(id);
         return ResponseEntity.noContent()
                              .build();
+    }
+
+    // 기간 내 영양소 합계 조회
+    @Operation(summary = "기간 내 영양소 합계 조회", description = "유저가 기록한 식단 로그 기반으로 칼로리/단백질/지방/탄수화물 합계를 반환합니다. date(YYYY-MM-DD), month(YYYY-MM) 또는 startDate/endDate(YYYY-MM-DD)를 사용하세요.")
+    @GetMapping("/me/macros")
+    public ResponseEntity<DietLogResponseDto.MacrosSummary> getMacrosSummary(
+        @AuthenticationPrincipal UUID userId,
+        @RequestParam(required = false) String date,
+        @RequestParam(required = false) String month,
+        @RequestParam(required = false) String startDate,
+        @RequestParam(required = false) String endDate
+    ) {
+        UserEntity user = userService.getUserById(userId, "DietLogController > getMacrosSummary");
+
+        LocalDate start;
+        LocalDate end;
+        if (date != null) {
+            start = LocalDate.parse(date);
+            end = start;
+        } else if (month != null) {
+            YearMonth ym = YearMonth.parse(month); // expect YYYY-MM
+            start = ym.atDay(1);
+            end = ym.atEndOfMonth();
+        } else {
+            // 기본값: 오늘 하루
+            start = startDate != null ? LocalDate.parse(startDate) : LocalDate.now();
+            end = endDate != null ? LocalDate.parse(endDate) : start;
+        }
+
+        List<DietLogEntity> logs = logService.getLogsInRange(user, start, end);
+
+        int calories = 0;
+        double protein = 0d;
+        double fat = 0d;
+        double carbs = 0d;
+
+        for (DietLogEntity log : logs) {
+            if (log.getItems() == null) continue;
+            for (var item : log.getItems()) {
+                calories += item.getCalories() != null ? item.getCalories() : 0;
+                protein += item.getProtein() != null ? item.getProtein() : 0d;
+                fat += item.getFat() != null ? item.getFat() : 0d;
+                carbs += item.getCarbs() != null ? item.getCarbs() : 0d;
+            }
+        }
+
+        DietLogResponseDto.MacrosSummary summary = DietLogResponseDto.MacrosSummary.builder()
+            .date(start.equals(end) ? start : null)
+            .calories(calories)
+            .protein(protein)
+            .fat(fat)
+            .carbs(carbs)
+            .build();
+
+        return ResponseEntity.ok(summary);
+    }
+
+    // 기간 내 일자별 영양소 합계
+    @Operation(summary = "기간 내 일자별 영양소 합계", description = "month(YYYY-MM) 또는 startDate/endDate(YYYY-MM-DD)로 각 날짜별 칼로리/단백질/지방/탄수화물 합계를 반환합니다. month가 우선입니다.")
+    @GetMapping("/me/macros/daily")
+    public ResponseEntity<List<DietLogResponseDto.MacrosDaily>> getDailyMacros(
+        @AuthenticationPrincipal UUID userId,
+        @RequestParam(required = false) String month,
+        @RequestParam(required = false) String startDate,
+        @RequestParam(required = false) String endDate
+    ) {
+        UserEntity user = userService.getUserById(userId, "DietLogController > getDailyMacros");
+
+        LocalDate start;
+        LocalDate end;
+        if (month != null) {
+            YearMonth ym = YearMonth.parse(month);
+            start = ym.atDay(1);
+            end = ym.atEndOfMonth();
+        } else {
+            LocalDate now = LocalDate.now();
+            start = startDate != null ? LocalDate.parse(startDate) : now.withDayOfMonth(1);
+            end = endDate != null ? LocalDate.parse(endDate) : now.withDayOfMonth(now.lengthOfMonth());
+        }
+
+        List<DietLogEntity> logs = logService.getLogsInRange(user, start, end);
+
+        // 날짜별 초기 합계 맵 (모든 날짜를 0으로 포함)
+        var days = new java.util.LinkedHashMap<LocalDate, int[]>();
+        for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+            // [calories, protein*10, fat*10, carbs*10] (double 누적을 위해 10배 스케일)
+            days.put(d, new int[] {0, 0, 0, 0});
+        }
+
+        for (DietLogEntity log : logs) {
+            if (log.getItems() == null) continue;
+            int[] acc = days.get(log.getLogDate());
+            if (acc == null) continue;
+            for (var item : log.getItems()) {
+                acc[0] += item.getCalories() != null ? item.getCalories() : 0;
+                acc[1] += (int) Math.round((item.getProtein() != null ? item.getProtein() : 0d) * 10);
+                acc[2] += (int) Math.round((item.getFat() != null ? item.getFat() : 0d) * 10);
+                acc[3] += (int) Math.round((item.getCarbs() != null ? item.getCarbs() : 0d) * 10);
+            }
+        }
+
+        List<DietLogResponseDto.MacrosDaily> result = new java.util.ArrayList<>();
+        for (var entry : days.entrySet()) {
+            int[] a = entry.getValue();
+            result.add(DietLogResponseDto.MacrosDaily.builder()
+                .date(entry.getKey())
+                .calories(a[0])
+                .protein(a[1] / 10.0)
+                .fat(a[2] / 10.0)
+                .carbs(a[3] / 10.0)
+                .build());
+        }
+        return ResponseEntity.ok(result);
     }
 }

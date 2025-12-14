@@ -78,4 +78,44 @@ public class DietLogResponseDto {
                 .build();
         }
     }
+
+    @Getter
+    @Builder
+    @Schema(name = "DietLogResponseDtoMacrosSummary", description = "기간 내 총 영양소 합계")
+    public static class MacrosSummary {
+        @Schema(description = "조회 날짜 (YYYY-MM-DD). 기간 합계일 경우 null")
+        private LocalDate date;
+
+        @Schema(description = "총 칼로리(kcal)")
+        private Integer calories;
+
+        @Schema(description = "총 단백질(g)")
+        private Double protein;
+
+        @Schema(description = "총 지방(g)")
+        private Double fat;
+
+        @Schema(description = "총 탄수화물(g)")
+        private Double carbs;
+    }
+
+    @Getter
+    @Builder
+    @Schema(name = "DietLogResponseDtoMacrosDaily", description = "일자별 영양소 합계")
+    public static class MacrosDaily {
+        @Schema(description = "날짜 (YYYY-MM-DD)", required = true)
+        private LocalDate date;
+
+        @Schema(description = "총 칼로리(kcal)")
+        private Integer calories;
+
+        @Schema(description = "총 단백질(g)")
+        private Double protein;
+
+        @Schema(description = "총 지방(g)")
+        private Double fat;
+
+        @Schema(description = "총 탄수화물(g)")
+        private Double carbs;
+    }
 }
