@@ -26,7 +26,8 @@ public class ChatMessageEntity extends BaseEntity {
     @Column(name = "role", nullable = false, length = 20)
     private ChatRole role;
 
-    @Column(name = "content", nullable = false, length = 1000)
+    // 어시스턴트 답변이 1000자를 초과할 수 있어 TEXT로 확장
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     public static ChatMessageEntity of(UUID userId, UUID sessionId, ChatRole role, String content) {

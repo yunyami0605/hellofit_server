@@ -14,6 +14,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import org.apache.commons.text.StringEscapeUtils;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneOffset;
 import java.util.Map;
@@ -149,19 +150,28 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         );
         broadcastToRoom(session, userMsgPayload);
 
-        // 세션 히스토리 기반 LLM 호출 (가능한 경우)
-        var history = chatService.getSessionMessagesForLlm(userId, sessionId, 20);
-        var historyWithCurrent = new java.util.ArrayList<com.hellofit.hellofit_server.llm.LlmClient.ChatMessage>(history);
-        historyWithCurrent.add(new com.hellofit.hellofit_server.llm.LlmClient.ChatMessage("user", content));
-        String reply = history.isEmpty() ? llmClient.generate(content) : llmClient.chat(historyWithCurrent);
-
-        // streaming simulation by chunking
-        // 실제 LLM이 스트리밍을 지원하지 않는 경우 대비: 고정 길이로 분할 전송
-        int chunkSize = 100;
-        for (int i = 0; i < reply.length(); i += chunkSize) {
-            String delta = reply.substring(i, Math.min(reply.length(), i + chunkSize));
-            sendJson(session, Map.of("type", "assistant_chunk", "delta", delta));
+        // 세션 히스토리 기반 LLM 호출 (가능하면 스트리밍)
+        StringBuilder replyBuf = new StringBuilder();
+        try {
+            llmClient.streamGenerate(content, delta -> {
+                try {
+                    String decodedDelta = StringEscapeUtils.unescapeJava(delta);
+                    replyBuf.append(decodedDelta);
+                    sendJson(session, Map.of("type", "assistant_chunk", "delta", decodedDelta));
+                } catch (Exception ignored) {}
+            });
+        } catch (Exception e) {
+            // fallback: 동기 호출
+            String fallback = llmClient.generate(content);
+            String decodedFallback = StringEscapeUtils.unescapeJava(fallback);
+            replyBuf.append(decodedFallback);
+            int chunkSize = 100;
+            for (int i = 0; i < decodedFallback.length(); i += chunkSize) {
+                String delta = decodedFallback.substring(i, Math.min(decodedFallback.length(), i + chunkSize));
+                sendJson(session, Map.of("type", "assistant_chunk", "delta", delta));
+            }
         }
+        String reply = replyBuf.toString();
 
         var assistantMsg = chatService.saveAssistantMessageEntity(userId, reply, Optional.ofNullable(sessionId));
         log.info("[WS] assistant_done: userId={} answerLen={} msgId=cm_{}", userId, reply.length(), assistantMsg.getId());

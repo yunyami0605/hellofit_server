@@ -10,6 +10,12 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
@@ -60,6 +66,54 @@ public class LlmClient {
         String s = String.valueOf(text);
         if (s.isBlank()) s = "죄송해요. 지금은 답변을 제공할 수 없어요.";
         return s;
+    }
+
+    /**
+     * SSE 스트리밍으로 delta를 수신하여 콜백으로 전달.
+     * 마지막에 [DONE]을 만나면 true 반환.
+     */
+    public void streamGenerate(String prompt, Consumer<String> onDelta) {
+        BufferedReader reader = null;
+        try {
+            String endpoint = baseUrl + "/generate/stream";
+            URL url = new URL(endpoint);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", "application/json");
+            if (apiKey != null && !apiKey.isBlank()) {
+                conn.setRequestProperty("Authorization", "Bearer " + apiKey);
+            }
+            String payload = "{\"prompt\":\"" + prompt.replace("\"", "\\\"") + "\"}";
+            conn.getOutputStream().write(payload.getBytes(StandardCharsets.UTF_8));
+            conn.getOutputStream().flush();
+
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("data:")) {
+                    String data = line.substring(5).trim();
+                    if ("[DONE]".equals(data)) {
+                        break;
+                    }
+                    // data는 {"delta":"..."} JSON
+                    int idx = data.indexOf("\"delta\":");
+                    if (idx >= 0) {
+                        int start = data.indexOf('"', idx + 8);
+                        int end = data.lastIndexOf('"');
+                        if (start >= 0 && end > start) {
+                            String delta = data.substring(start + 1, end);
+                            onDelta.accept(delta);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            try {
+                if (reader != null) reader.close();
+            } catch (Exception ignored) {}
+        }
     }
 }
 
