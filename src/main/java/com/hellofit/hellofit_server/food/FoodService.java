@@ -9,11 +9,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 
 @RequiredArgsConstructor
 @Service
@@ -29,36 +36,75 @@ public class FoodService {
     }
 
     public int saveFoodsFromCsv(MultipartFile file) {
-        try (CSVReader reader = new CSVReader(new InputStreamReader(file.getInputStream(), java.nio.charset.Charset.forName("MS949")))) {
-            String[] nextLine;
-            List<FoodEntity> foods = new ArrayList<>();
-            reader.readNext(); // skip header
-
-            while ((nextLine = reader.readNext()) != null) {
-                FoodEntity food = FoodEntity.builder()
-                                            .foodCode(nextLine[0])         // 식품코드
-                                            .foodName(nextLine[1])         // 식품명
-                                            .category(nextLine[2])         // 식품대분류명
-                                            .repFoodName(nextLine[3])      // 대표식품명
-                                            .kcal(parseFloat(nextLine[4]))      // 에너지(kcal)
-                                            .protein(parseFloat(nextLine[5]))   // 단백질(g)
-                                            .fat(parseFloat(nextLine[6]))       // 지방(g)
-                                            .carbs(parseFloat(nextLine[7]))     // 탄수화물(g)
-                                            .sugar(parseFloat(nextLine[8]))     // 당류(g)
-                                            .calcium(parseFloat(nextLine[9]))   // 칼슘(mg)
-                                            .sodium(parseFloat(nextLine[10]))    // 나트륨(mg)
-                                            .cholesterol(parseFloat(nextLine[11])) // 콜레스테롤(mg)
-                                            .weight(parseFloat(nextLine[12]))    // 식품중량
-                                            .dataDate(LocalDate.parse(nextLine[13])) // 데이터기준일자
-                                            .build()
-                    ;
-                foods.add(food);
+        try {
+            byte[] data = file.getBytes();
+            int offset = 0;
+            Charset charset = detectCharset(data);
+            // If UTF-8 with BOM, skip BOM bytes
+            if (charset.equals(StandardCharsets.UTF_8) && hasUtf8Bom(data)) {
+                offset = 3;
             }
-            foodRepository.saveAll(foods);
-            return foods.size();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(data, offset, data.length - offset), charset));
+                 CSVReader reader = new CSVReader(br)) {
+                String[] nextLine;
+                List<FoodEntity> foods = new ArrayList<>();
+                // skip header
+                reader.readNext();
+                while ((nextLine = reader.readNext()) != null) {
+                    if (nextLine.length == 0) continue;
+                    FoodEntity food = FoodEntity.builder()
+                        .foodCode(getSafe(nextLine, 0))          // 식품코드
+                        .foodName(getSafe(nextLine, 1))          // 식품명
+                        .category(getSafe(nextLine, 2))          // 식품대분류명
+                        .repFoodName(getSafe(nextLine, 3))       // 대표식품명
+                        .kcal(parseFloat(getSafe(nextLine, 4)))  // 에너지(kcal)
+                        .protein(parseFloat(getSafe(nextLine, 5)))   // 단백질(g)
+                        .fat(parseFloat(getSafe(nextLine, 6)))       // 지방(g)
+                        .carbs(parseFloat(getSafe(nextLine, 7)))     // 탄수화물(g)
+                        .sugar(parseFloat(getSafe(nextLine, 8)))     // 당류(g)
+                        .calcium(parseFloat(getSafe(nextLine, 9)))   // 칼슘(mg)
+                        .sodium(parseFloat(getSafe(nextLine, 10)))   // 나트륨(mg)
+                        .cholesterol(parseFloat(getSafe(nextLine, 11))) // 콜레스테롤(mg)
+                        .weight(parseFloat(getSafe(nextLine, 12)))    // 식품중량
+                        .dataDate(LocalDate.parse(getSafe(nextLine, 13))) // 데이터기준일자 (YYYY-MM-DD)
+                        .build();
+                    foods.add(food);
+                }
+                foodRepository.saveAll(foods);
+                return foods.size();
+            }
         } catch (Exception e) {
             throw new RuntimeException("CSV upload error: " + e.getMessage(), e);
         }
+    }
+
+    private static boolean hasUtf8Bom(byte[] data) {
+        return data.length >= 3 && (data[0] == (byte) 0xEF && data[1] == (byte) 0xBB && data[2] == (byte) 0xBF);
+    }
+
+    /**
+     * Try to detect charset: prefer UTF-8 (with or without BOM); if decoding fails, fallback to MS949.
+     */
+    private static Charset detectCharset(byte[] data) {
+        // If it has UTF-8 BOM, it's UTF-8
+        if (hasUtf8Bom(data)) {
+            return StandardCharsets.UTF_8;
+        }
+        // Try strict UTF-8 decode
+        CharsetDecoder dec = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT);
+        try {
+            dec.decode(ByteBuffer.wrap(data));
+            return StandardCharsets.UTF_8;
+        } catch (Exception ignore) {
+            // fall through to CP949
+        }
+        return Charset.forName("MS949");
+    }
+
+    private static String getSafe(String[] arr, int idx) {
+        return idx < arr.length ? arr[idx] : null;
     }
 
     private Float parseFloat(String value) {

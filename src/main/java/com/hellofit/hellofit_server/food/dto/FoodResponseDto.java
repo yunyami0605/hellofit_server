@@ -15,6 +15,9 @@ public class FoodResponseDto {
         @Schema(description = "음식 ID")
         private UUID id;
 
+        @Schema(description = "음식명")
+        private String foodName;
+
         @Schema(description = "대표 식품명")
         private String repFoodName;
 
@@ -39,6 +42,7 @@ public class FoodResponseDto {
         public static Summary fromEntity(FoodEntity entity) {
             return Summary.builder()
                 .id(entity.getId())
+                .foodName(entity.getFoodName())
                 .repFoodName(entity.getRepFoodName())
                 .category(entity.getCategory())
                 .kcal(entity.getKcal())

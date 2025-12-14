@@ -7,14 +7,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Tag(name = "음식 API", description = "식품 CSV 업로드 및 관리 API")
@@ -50,9 +47,12 @@ public class FoodController {
     @Operation(summary = "음식 검색 (cursor 기반)", description = "createdAt 기준 cursor 방식으로 음식 데이터를 검색합니다.")
     public CursorResponse<FoodResponseDto.Summary> searchFoods(
         @RequestParam(required = false, defaultValue = "") String keyword,
-        @RequestParam(required = false) UUID cursor,
+        // 프론트에서 사용하는 파라미터명(cursorId)과의 호환을 위해 둘 다 지원
+        @RequestParam(name = "cursorId", required = false) UUID cursorId,
+        @RequestParam(name = "cursor", required = false) UUID cursor,
         @RequestParam(defaultValue = "10") int size
     ) {
-        return foodService.searchFoods(keyword, cursor, size);
+        UUID effectiveCursor = (cursorId != null) ? cursorId : cursor;
+        return foodService.searchFoods(keyword, effectiveCursor, size);
     }
 }
