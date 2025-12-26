@@ -68,9 +68,6 @@ dependencies {
     implementation("com.opencsv:opencsv:5.9")
     implementation("com.nimbusds:nimbus-jose-jwt:9.37")
 
-    // WebSocket
-    implementation("org.springframework.boot:spring-boot-starter-websocket")
-
     // String unescape for Unicode (\uXXXX -> UTF-8)
     implementation("org.apache.commons:commons-text:1.11.0")
 }

@@ -167,7 +167,7 @@ public class AuthService {
     /**
      * [서비스 로직] ac 토큰 재발급
      */
-    public TokenRefreshResponseDto refreshAccessToken(HttpServletRequest request) {
+    public TokenRefreshResponseDto refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = getCookieValue(request, AuthConstant.REFRESH_TOKEN_COOKIE).orElseThrow(() -> new AuthException.TokenInvalid("AuthService > refreshAccessToken", AuthConstant.REFRESH_TOKEN_COOKIE, ""));
         String xsrfToken = getCookieValue(request, AuthConstant.XSRF_TOKEN_COOKIE).orElseThrow(() -> new AuthException.TokenInvalid("AuthService > refreshAccessToken", AuthConstant.XSRF_TOKEN_COOKIE, ""));
 
@@ -208,16 +208,57 @@ public class AuthService {
         // 4. 새 Access Token 발급
         String newAccessToken = jwtTokenProvider.generateAccessToken(userId, null);
 
+        // 새 Access Token을 httpOnly 쿠키로 설정
+        ResponseCookie accessCookie = ResponseCookie.from(AuthConstant.ACCESS_TOKEN_COOKIE, newAccessToken)
+                                                    .httpOnly(true)
+                                                    .sameSite(Arrays.asList(env.getActiveProfiles()).contains("prod") ? "None" : "Lax")
+                                                    .secure(Arrays.asList(env.getActiveProfiles()).contains("prod"))
+                                                    .path("/")
+                                                    .maxAge(AuthConstant.ACCESS_TOKEN_LIFETIME)
+                                                    .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+
+        // 하위 호환: 바디에도 access 포함 (프론트는 사용하지 않음)
         return TokenRefreshResponseDto.builder()
                                       .access(newAccessToken)
                                       .build();
     }
 
     /**
-     * [서비스 로직] 로그아웃 -> rf token 제거
+     * [서비스 로직] 로그아웃 -> rf token 제거 및 쿠키 만료
      */
-    public void logout(UUID userId) {
+    public void logout(UUID userId, HttpServletResponse response) {
         refreshTokenRepository.deleteById(userId);
+
+        boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("prod");
+
+        // attk 삭제
+        ResponseCookie clearAccess = ResponseCookie.from(AuthConstant.ACCESS_TOKEN_COOKIE, "")
+                                                   .httpOnly(true)
+                                                   .sameSite(isProd ? "None" : "Lax")
+                                                   .secure(isProd)
+                                                   .path("/")
+                                                   .maxAge(0)
+                                                   .build();
+        // rttk 삭제
+        ResponseCookie clearRefresh = ResponseCookie.from(AuthConstant.REFRESH_TOKEN_COOKIE, "")
+                                                    .httpOnly(true)
+                                                    .sameSite(isProd ? "None" : "Lax")
+                                                    .secure(isProd)
+                                                    .path("/")
+                                                    .maxAge(0)
+                                                    .build();
+        // xsrftk 삭제
+        ResponseCookie clearXsrf = ResponseCookie.from(AuthConstant.XSRF_TOKEN_COOKIE, "")
+                                                 .sameSite(isProd ? "None" : "Lax")
+                                                 .secure(isProd)
+                                                 .path("/")
+                                                 .maxAge(0)
+                                                 .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, clearXsrf.toString());
     }
 
     /**
@@ -315,8 +356,18 @@ public class AuthService {
                                                      .build()
             ;
 
+        // Access Token httpOnly 쿠키 설정
+        ResponseCookie accessCookie = ResponseCookie.from(AuthConstant.ACCESS_TOKEN_COOKIE, accessToken)
+                                                    .httpOnly(true)
+                                                    .sameSite(Arrays.asList(env.getActiveProfiles()).contains("prod") ? "None" : "Lax")
+                                                    .secure(Arrays.asList(env.getActiveProfiles()).contains("prod"))
+                                                    .path("/")
+                                                    .maxAge(AuthConstant.ACCESS_TOKEN_LIFETIME)
+                                                    .build();
+
         setXSRFToken(response);
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
 
         return AuthResponseDto.Access.builder()
                                      .access(accessToken)

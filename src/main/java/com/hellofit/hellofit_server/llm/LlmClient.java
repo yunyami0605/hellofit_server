@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
+import org.apache.commons.text.StringEscapeUtils;
 
 @Component
 @RequiredArgsConstructor
@@ -81,9 +82,12 @@ public class LlmClient {
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Accept", "text/event-stream");
             if (apiKey != null && !apiKey.isBlank()) {
                 conn.setRequestProperty("Authorization", "Bearer " + apiKey);
             }
+            conn.setConnectTimeout(10_000);
+            conn.setReadTimeout(60_000);
             String payload = "{\"prompt\":\"" + prompt.replace("\"", "\\\"") + "\"}";
             conn.getOutputStream().write(payload.getBytes(StandardCharsets.UTF_8));
             conn.getOutputStream().flush();
@@ -103,7 +107,9 @@ public class LlmClient {
                         int end = data.lastIndexOf('"');
                         if (start >= 0 && end > start) {
                             String delta = data.substring(start + 1, end);
-                            onDelta.accept(delta);
+                            // WS와 동일하게 escape 제거
+                            String decodedDelta = StringEscapeUtils.unescapeJava(delta);
+                            onDelta.accept(decodedDelta);
                         }
                     }
                 }

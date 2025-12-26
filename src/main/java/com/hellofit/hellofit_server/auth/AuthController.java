@@ -123,8 +123,8 @@ public class AuthController {
         content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
     )
     @PostMapping("/refresh")
-    public TokenRefreshResponseDto refreshToken(HttpServletRequest request) {
-        return authService.refreshAccessToken(request);
+    public TokenRefreshResponseDto refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        return authService.refreshAccessToken(request, response);
     }
 
     @Operation(summary = "로그아웃 API")
@@ -134,8 +134,8 @@ public class AuthController {
     )
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@AuthenticationPrincipal UUID userId) {
-        authService.logout(userId);
+    public void logout(@AuthenticationPrincipal UUID userId, HttpServletResponse response) {
+        authService.logout(userId, response);
     }
 
     @Operation(summary = "본인 유저 정보 조회 API")

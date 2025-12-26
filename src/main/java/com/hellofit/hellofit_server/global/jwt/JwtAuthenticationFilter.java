@@ -25,6 +25,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import jakarta.servlet.http.Cookie;
 import java.util.List;
 import java.util.UUID;
 
@@ -121,6 +122,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        // Authorization 헤더가 없으면 httpOnly access token 쿠키 조회
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if (AuthConstant.ACCESS_TOKEN_COOKIE.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
         }
         return null;
     }

@@ -57,6 +57,9 @@ public class DietRecommendationResponseDto {
     @Builder
     @Schema(description = "추천 음식 요약 DTO")
     public static class FoodSummary {
+        @Schema(description = "음식 ID", example = "550e8400-e29b-41d4-a716-446655440000")
+        private UUID id;
+
         @Schema(description = "음식 이름", example = "닭가슴살 샐러드")
         private String foodName;
 
@@ -74,6 +77,7 @@ public class DietRecommendationResponseDto {
 
         public static FoodSummary fromEntity(DietRecommendationItemEntity item) {
             return FoodSummary.builder()
+                .id(item.getId())
                 .foodName(item.getFoodName())
                 .calories(item.getCalories())
                 .protein(item.getProtein())
